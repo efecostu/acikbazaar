@@ -9,54 +9,67 @@ import { calculateOdds } from '@/lib/odds';
 
 interface MarketCardProps {
   market: Market;
+  href?: string;
 }
 
-export function MarketCard({ market }: MarketCardProps) {
+export function MarketCard({ market, href }: MarketCardProps) {
   const { lang, t } = useLang();
   const { yesProb, yesOdds, noOdds } = calculateOdds(market.yes_pool, market.no_pool);
   const yesPct = Math.round(yesProb * 100);
   const days = daysUntil(market.ends_at);
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const catColor = categoryColor(market.category);
+  const link = href ?? `/markets/${market.id}`;
 
   return (
-    <Link href={`/markets/${market.id}`}>
-      <div className="market-card bg-[#131620] border border-[#1E2130] rounded-lg p-4 flex flex-col gap-3 cursor-pointer">
+    <Link href={link}>
+      <div className="market-card bg-white border border-[#E5E7EB] rounded-xl p-5 flex flex-col gap-4 cursor-pointer h-full">
         {/* Top row */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge color={catColor}>{categoryLabel(market.category, lang)}</Badge>
             {market.tag && (
-              <Badge className="bg-[#00FF88]/10 text-[#00FF88] border border-[#00FF88]/30">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide bg-amber-50 text-amber-600 border border-amber-200">
                 {market.tag}
-              </Badge>
+              </span>
             )}
-            <span className="text-[10px] text-[#4B5563]">
-              {market.region === 'turkey' ? '🇹🇷' : '🌐'}
-            </span>
           </div>
-          <span className={`text-xs shrink-0 ${days <= 7 ? 'text-red-400' : 'text-[#8892A4]'}`}>
-            {days}d
+          <span className={`text-xs font-medium shrink-0 ${days <= 7 ? 'text-red-500' : 'text-[#9CA3AF]'}`}>
+            {days}g kaldı
           </span>
         </div>
 
         {/* Title */}
-        <p className="text-sm text-[#F0F2F5] leading-snug line-clamp-2">{title}</p>
+        <p className="text-[15px] font-semibold text-[#111827] leading-snug line-clamp-2 flex-1">
+          {title}
+        </p>
 
-        {/* Prob bar */}
-        <div>
-          <div className="prob-bar">
-            <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+        {/* Big probability */}
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-2xl font-bold text-[#16A34A]">{yesPct}%</div>
+            <div className="text-xs text-[#6B7280] mt-0.5">{t('EVET ihtimali', 'YES chance')}</div>
           </div>
-          <div className="flex justify-between mt-1.5">
-            <span className="text-xs text-[#00FF88]">YES {yesPct}% · {yesOdds}x</span>
-            <span className="text-xs text-red-400">NO {100 - yesPct}% · {noOdds}x</span>
+          <div className="text-right">
+            <div className="text-sm font-semibold text-[#6B7280]">{100 - yesPct}%</div>
+            <div className="text-xs text-[#9CA3AF]">{t('HAYIR', 'NO')}</div>
           </div>
         </div>
 
-        {/* Footer stats */}
-        <div className="flex items-center justify-between text-[10px] text-[#4B5563] pt-1 border-t border-[#1E2130]">
-          <span>{t('Hacim', 'Vol')}: ◈{formatCredits(market.total_volume)}</span>
+        {/* Prob bar */}
+        <div className="prob-bar">
+          <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+        </div>
+
+        {/* Odds row */}
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[#16A34A] font-semibold">{yesOdds}x {t('EVET', 'YES')}</span>
+          <span className="text-red-500 font-semibold">{noOdds}x {t('HAYIR', 'NO')}</span>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between text-xs text-[#9CA3AF] pt-2 border-t border-[#F3F4F6]">
+          <span>◈{formatCredits(market.total_volume)} {t('hacim', 'volume')}</span>
           <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
         </div>
       </div>

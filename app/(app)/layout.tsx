@@ -8,7 +8,7 @@ const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBL
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   if (DEMO_MODE) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
         <Header balance={1000} username="demo" />
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
           {children}
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .single();
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
       <Header balance={profile?.balance} username={profile?.username} />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
         {children}

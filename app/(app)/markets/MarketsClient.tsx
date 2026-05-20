@@ -10,9 +10,7 @@ import { cn } from '@/lib/utils';
 const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world'];
 const REGIONS: (MarketRegion | 'all')[] = ['all', 'turkey', 'global'];
 
-interface Props {
-  markets: Market[];
-}
+interface Props { markets: Market[] }
 
 export function MarketsClient({ markets }: Props) {
   const { lang, t } = useLang();
@@ -33,51 +31,48 @@ export function MarketsClient({ markets }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page header */}
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-[#F0F2F5]">{t('Aktif Marketler', 'Active Markets')}</h1>
-        <p className="text-xs text-[#8892A4] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
+        <h1 className="text-2xl font-bold text-[#111827]">{t('Aktif Marketler', 'Active Markets')}</h1>
+        <p className="text-sm text-[#6B7280] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Search */}
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
         <input
           type="text"
           placeholder={t('Market ara...', 'Search markets...')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-[#0F1117] border border-[#1E2130] rounded px-3 py-2 text-sm text-[#F0F2F5] placeholder:text-[#4B5563] outline-none focus:border-[#00FF88] transition-colors font-mono"
+          className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#E5E7EB] rounded-xl text-sm text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/10 transition-all"
         />
+      </div>
 
-        <div className="flex gap-2 flex-wrap">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex gap-1.5 flex-wrap">
           {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={cn(
-                'px-3 py-1.5 text-xs rounded border transition-colors',
+            <button key={cat} onClick={() => setCategory(cat)}
+              className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
                 category === cat
-                  ? 'border-[#00FF88] text-[#00FF88] bg-[#00FF88]/10'
-                  : 'border-[#1E2130] text-[#8892A4] hover:border-[#00FF88]/50'
-              )}
-            >
+                  ? 'border-[#16A34A] text-[#16A34A] bg-[#F0FDF4]'
+                  : 'border-[#E5E7EB] text-[#6B7280] hover:border-[#D1D5DB] bg-white'
+              )}>
               {cat === 'all' ? t('Tümü', 'All') : categoryLabel(cat, lang)}
             </button>
           ))}
         </div>
-
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {REGIONS.map((reg) => (
-            <button
-              key={reg}
-              onClick={() => setRegion(reg)}
-              className={cn(
-                'px-3 py-1.5 text-xs rounded border transition-colors',
+            <button key={reg} onClick={() => setRegion(reg)}
+              className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
                 region === reg
-                  ? 'border-[#00FF88] text-[#00FF88] bg-[#00FF88]/10'
-                  : 'border-[#1E2130] text-[#8892A4] hover:border-[#00FF88]/50'
-              )}
-            >
+                  ? 'border-[#16A34A] text-[#16A34A] bg-[#F0FDF4]'
+                  : 'border-[#E5E7EB] text-[#6B7280] hover:border-[#D1D5DB] bg-white'
+              )}>
               {reg === 'all' ? t('Tümü', 'All') : reg === 'turkey' ? '🇹🇷 TR' : '🌐 Global'}
             </button>
           ))}
@@ -86,7 +81,7 @@ export function MarketsClient({ markets }: Props) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-[#8892A4] text-sm">
+        <div className="text-center py-20 text-[#9CA3AF] text-sm">
           {t('Market bulunamadı.', 'No markets found.')}
         </div>
       ) : (
@@ -97,9 +92,8 @@ export function MarketsClient({ markets }: Props) {
         </div>
       )}
 
-      {/* Stats footer */}
-      <p className="text-xs text-[#4B5563] text-center">
-        {filtered.length} / {markets.length} {t('market gösteriliyor', 'markets shown')}
+      <p className="text-xs text-[#9CA3AF] text-center">
+        {filtered.length} / {markets.length} {t('market', 'markets')}
       </p>
     </div>
   );

@@ -18,10 +18,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -32,39 +30,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-[#00FF88] text-3xl">◈</span>
-          <h1 className="text-lg font-bold mt-2 text-[#F0F2F5]">AçıkBazaar</h1>
-          <p className="text-xs text-[#8892A4] mt-1">Açıkça tahmin et. Özgürce oyna.</p>
+          <Link href="/" className="inline-flex items-center gap-2">
+            <span className="text-[#16A34A] font-bold text-2xl">◈</span>
+            <span className="text-xl font-bold text-[#111827]">AçıkBazaar</span>
+          </Link>
+          <p className="text-sm text-[#6B7280] mt-2">Açıkça tahmin et. Özgürce oyna.</p>
         </div>
 
-        <div className="bg-[#131620] border border-[#1E2130] rounded-lg p-6">
-          <h2 className="text-sm font-bold text-[#F0F2F5] mb-5">Giriş Yap</h2>
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-[#111827] mb-5">Giriş Yap</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              id="email"
-              type="email"
-              label="E-posta"
-              placeholder="kullanici@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              id="password"
-              type="password"
-              label="Şifre"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <Input id="email" type="email" label="E-posta" placeholder="kullanici@email.com"
+              value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="password" type="password" label="Şifre" placeholder="••••••••"
+              value={password} onChange={(e) => setPassword(e.target.value)} required />
 
             {error && (
-              <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded px-3 py-2">
+              <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -74,9 +60,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-xs text-[#8892A4] mt-4">
+          <p className="text-center text-sm text-[#6B7280] mt-4">
             Hesabın yok mu?{' '}
-            <Link href="/register" className="text-[#00FF88] hover:underline">
+            <Link href="/register" className="text-[#16A34A] font-semibold hover:underline">
               Kayıt Ol
             </Link>
           </p>

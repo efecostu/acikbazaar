@@ -32,12 +32,12 @@ export function Header({ balance, username }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#1E2130] bg-[#08090C]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-[#E5E7EB] bg-white/95 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-6">
         {/* Logo */}
         <Link href="/markets" className="flex items-center gap-2 shrink-0">
-          <span className="text-[#00FF88] text-lg">◈</span>
-          <span className="text-sm font-bold tracking-tight text-[#F0F2F5]">AçıkBazaar</span>
+          <span className="text-[#16A34A] font-bold text-lg leading-none">◈</span>
+          <span className="text-sm font-bold text-[#111827] tracking-tight">AçıkBazaar</span>
         </Link>
 
         {/* Nav */}
@@ -47,10 +47,10 @@ export function Header({ balance, username }: HeaderProps) {
               key={link.href}
               href={link.href}
               className={cn(
-                'px-3 py-1.5 text-xs rounded transition-colors',
+                'px-3 py-1.5 text-sm rounded-lg transition-colors font-medium',
                 pathname.startsWith(link.href)
-                  ? 'text-[#00FF88] bg-[#00FF88]/10'
-                  : 'text-[#8892A4] hover:text-[#F0F2F5]'
+                  ? 'text-[#16A34A] bg-[#F0FDF4]'
+                  : 'text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB]'
               )}
             >
               {link.label}
@@ -62,24 +62,24 @@ export function Header({ balance, username }: HeaderProps) {
 
         {/* Balance */}
         {balance !== undefined && (
-          <div className="hidden sm:flex items-center gap-1.5 bg-[#0F1117] border border-[#1E2130] rounded px-3 py-1.5">
-            <span className="text-[#00FF88] text-xs">◈</span>
-            <span className="text-xs font-mono text-[#F0F2F5]">{formatCredits(balance)}</span>
+          <div className="hidden sm:flex items-center gap-1.5 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-3 py-1.5">
+            <span className="text-[#16A34A] text-xs font-bold">◈</span>
+            <span className="text-sm font-semibold text-[#15803D]">{formatCredits(balance)}</span>
           </div>
         )}
 
         {/* Lang toggle */}
         <button
           onClick={toggleLang}
-          className="text-xs text-[#8892A4] hover:text-[#00FF88] transition-colors px-2 py-1 rounded border border-[#1E2130] hover:border-[#00FF88]"
+          className="text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition-colors px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB]"
         >
           {lang === 'tr' ? 'EN' : 'TR'}
         </button>
 
-        {/* Profile / Auth */}
+        {/* Auth */}
         {username ? (
           <div className="flex items-center gap-2">
-            <Link href="/profile" className="text-xs text-[#8892A4] hover:text-[#00FF88] transition-colors">
+            <Link href="/profile" className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors">
               @{username}
             </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
@@ -99,16 +99,16 @@ export function Header({ balance, username }: HeaderProps) {
       </div>
 
       {/* Mobile nav */}
-      <div className="md:hidden border-t border-[#1E2130] flex">
+      <div className="md:hidden border-t border-[#F3F4F6] flex">
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className={cn(
-              'flex-1 text-center py-2 text-xs transition-colors',
+              'flex-1 text-center py-2 text-xs font-medium transition-colors',
               pathname.startsWith(link.href)
-                ? 'text-[#00FF88] border-b border-[#00FF88]'
-                : 'text-[#8892A4]'
+                ? 'text-[#16A34A] border-b-2 border-[#16A34A]'
+                : 'text-[#9CA3AF]'
             )}
           >
             {link.label}

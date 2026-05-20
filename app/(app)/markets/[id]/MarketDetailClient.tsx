@@ -20,7 +20,6 @@ interface Props {
 export function MarketDetailClient({ market, balance: initialBalance, userId, userBets }: Props) {
   const { lang, t } = useLang();
   const router = useRouter();
-
   const [balance, setBalance] = useState(initialBalance);
   const [amount, setAmount] = useState(50);
   const [selectedSide, setSelectedSide] = useState<BetSide | null>(null);
@@ -32,212 +31,164 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
   const yesPct = Math.round(yesProb * 100);
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const description = lang === 'tr' ? market.description_tr : market.description_en;
-
   const activeSideProb = selectedSide === 'yes' ? yesProb : noProb;
   const activeSideOdds = selectedSide === 'yes' ? yesOdds : noOdds;
   const potentialPayout = selectedSide ? calculatePayout(amount, activeSideProb) : 0;
 
   async function handlePlaceBet() {
     if (!selectedSide) return;
-    if (amount <= 0 || amount > balance) {
-      setError(t('Geçersiz miktar.', 'Invalid amount.'));
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
+    if (amount <= 0 || amount > balance) { setError(t('Geçersiz miktar.', 'Invalid amount.')); return; }
+    setLoading(true); setError(''); setSuccess('');
     const supabase = createClient();
-
     const { error: betError } = await supabase.from('bets').insert({
-      user_id: userId,
-      market_id: market.id,
-      side: selectedSide,
-      amount,
-      odds_at_bet: activeSideOdds,
-      potential_payout: potentialPayout,
-      status: 'pending',
+      user_id: userId, market_id: market.id, side: selectedSide,
+      amount, odds_at_bet: activeSideOdds, potential_payout: potentialPayout, status: 'pending',
     });
-
-    if (betError) {
-      setError(betError.message);
-      setLoading(false);
-      return;
-    }
-
-    const { error: balanceError } = await supabase
-      .from('profiles')
-      .update({ balance: balance - amount, total_bets: undefined })
-      .eq('id', userId);
-
-    if (!balanceError) {
-      setBalance((b) => b - amount);
-    }
-
-    await supabase.rpc('increment_market_pool', {
-      p_market_id: market.id,
-      p_side: selectedSide,
-      p_amount: amount,
-    }).then(() => {});
-
-    setSuccess(t(`◈${amount} kredi ile ${selectedSide.toUpperCase()} tarafına bahis yapıldı!`, `Bet placed: ◈${amount} on ${selectedSide.toUpperCase()}!`));
+    if (betError) { setError(betError.message); setLoading(false); return; }
+    await supabase.from('profiles').update({ balance: balance - amount }).eq('id', userId);
+    setBalance((b) => b - amount);
+    setSuccess(t(`◈${amount} kredi — ${selectedSide.toUpperCase()} tarafına bahis yapıldı!`, `Bet placed: ◈${amount} on ${selectedSide.toUpperCase()}!`));
     setLoading(false);
     router.refresh();
   }
 
   return (
-    <div className="max-w-3xl mx-auto flex flex-col gap-6">
-      {/* Back */}
-      <button onClick={() => router.back()} className="text-xs text-[#8892A4] hover:text-[#00FF88] transition-colors self-start">
+    <div className="max-w-2xl mx-auto flex flex-col gap-5">
+      <button onClick={() => router.back()} className="text-sm text-[#6B7280] hover:text-[#111827] transition-colors self-start flex items-center gap-1">
         ← {t('Geri', 'Back')}
       </button>
 
-      {/* Market header */}
-      <div className="bg-[#131620] border border-[#1E2130] rounded-lg p-5 flex flex-col gap-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge color={categoryColor(market.category)}>{categoryLabel(market.category, lang)}</Badge>
-          {market.tag && (
-            <Badge className="bg-[#00FF88]/10 text-[#00FF88] border border-[#00FF88]/30">{market.tag}</Badge>
-          )}
-          <span className="text-xs text-[#8892A4]">{market.region === 'turkey' ? '🇹🇷 Türkiye' : '🌐 Global'}</span>
-          <span className={`ml-auto text-xs ${daysUntil(market.ends_at) <= 7 ? 'text-red-400' : 'text-[#8892A4]'}`}>
+      {/* Market info */}
+      <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col gap-5">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Badge color={categoryColor(market.category)}>{categoryLabel(market.category, lang)}</Badge>
+            {market.tag && <span className="px-2 py-0.5 rounded-md text-[11px] font-bold uppercase bg-amber-50 text-amber-600 border border-amber-200">{market.tag}</span>}
+            <span className="text-xs text-[#9CA3AF]">{market.region === 'turkey' ? '🇹🇷' : '🌐'}</span>
+          </div>
+          <span className={`text-xs font-medium ${daysUntil(market.ends_at) <= 7 ? 'text-red-500' : 'text-[#9CA3AF]'}`}>
             {t('Bitiş', 'Ends')}: {formatDate(market.ends_at, lang)}
           </span>
         </div>
 
-        <h1 className="text-base font-bold text-[#F0F2F5] leading-snug">{title}</h1>
-        {description && <p className="text-xs text-[#8892A4] leading-relaxed">{description}</p>}
+        <h1 className="text-xl font-bold text-[#111827] leading-snug">{title}</h1>
+        {description && <p className="text-sm text-[#6B7280] leading-relaxed">{description}</p>}
 
-        {/* Prob */}
-        <div>
-          <div className="prob-bar h-2">
-            <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+        {/* Big prob display */}
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <div className="text-4xl font-bold text-[#16A34A]">{yesPct}%</div>
+            <div className="text-sm text-[#6B7280] mt-1">{t('EVET ihtimali', 'YES chance')}</div>
           </div>
-          <div className="flex justify-between mt-2 text-sm font-bold">
-            <span className="text-[#00FF88]">YES {yesPct}%</span>
-            <span className="text-red-400">NO {100 - yesPct}%</span>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-[#DC2626]">{100 - yesPct}%</div>
+            <div className="text-sm text-[#6B7280] mt-1">{t('HAYIR ihtimali', 'NO chance')}</div>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="flex gap-4 text-xs text-[#8892A4] border-t border-[#1E2130] pt-3">
+        <div className="prob-bar" style={{ height: '8px' }}>
+          <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+        </div>
+
+        <div className="flex gap-6 text-sm text-[#6B7280] pt-2 border-t border-[#F3F4F6]">
           <span>{t('Hacim', 'Volume')}: ◈{formatCredits(market.total_volume)}</span>
           <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
-          <span>YES {yesOdds}x · NO {noOdds}x</span>
+          <span>EVET {yesOdds}x · HAYIR {noOdds}x</span>
         </div>
       </div>
 
       {/* Bet panel */}
       {market.status === 'active' && (
-        <div className="bg-[#131620] border border-[#1E2130] rounded-lg p-5 flex flex-col gap-4">
-          <h2 className="text-sm font-bold text-[#F0F2F5]">{t('Bahis Yap', 'Place Bet')}</h2>
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col gap-5">
+          <h2 className="text-base font-bold text-[#111827]">{t('Bahis Yap', 'Place Bet')}</h2>
 
-          {/* Side selection */}
+          {/* Side select */}
           <div className="grid grid-cols-2 gap-3">
             {(['yes', 'no'] as BetSide[]).map((side) => (
-              <button
-                key={side}
-                onClick={() => setSelectedSide(side)}
-                className={`p-4 rounded border-2 transition-all ${
+              <button key={side} onClick={() => setSelectedSide(side)}
+                className={`p-4 rounded-xl border-2 transition-all text-left ${
                   selectedSide === side
-                    ? side === 'yes'
-                      ? 'border-[#00FF88] bg-[#00FF88]/10'
-                      : 'border-red-500 bg-red-500/10'
-                    : 'border-[#1E2130] hover:border-[#8892A4]'
-                }`}
-              >
-                <div className={`text-base font-bold ${side === 'yes' ? 'text-[#00FF88]' : 'text-red-400'}`}>
-                  {side.toUpperCase()}
+                    ? side === 'yes' ? 'border-[#16A34A] bg-[#F0FDF4]' : 'border-red-500 bg-red-50'
+                    : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
+                }`}>
+                <div className={`text-lg font-bold ${side === 'yes' ? 'text-[#16A34A]' : 'text-red-500'}`}>
+                  {side === 'yes' ? t('EVET', 'YES') : t('HAYIR', 'NO')}
                 </div>
-                <div className="text-xs text-[#8892A4] mt-1">
-                  {side === 'yes' ? yesOdds : noOdds}x · {side === 'yes' ? yesPct : 100 - yesPct}%
+                <div className="text-xs text-[#6B7280] mt-1">
+                  {side === 'yes' ? `${yesOdds}x · ${yesPct}%` : `${noOdds}x · ${100 - yesPct}%`}
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Amount input */}
+          {/* Amount */}
           <div>
-            <label className="text-xs text-[#8892A4] uppercase tracking-wider mb-1.5 block">
-              {t('Miktar', 'Amount')} (◈{t('kredi', 'credits')})
+            <label className="text-xs font-semibold text-[#374151] uppercase tracking-wider mb-2 block">
+              {t('Miktar', 'Amount')} (◈ kredi)
             </label>
             <div className="flex gap-2">
-              <input
-                type="number"
-                min={1}
-                max={balance}
-                value={amount}
+              <input type="number" min={1} max={balance} value={amount}
                 onChange={(e) => setAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                className="flex-1 bg-[#0F1117] border border-[#1E2130] rounded px-3 py-2 text-sm text-[#F0F2F5] outline-none focus:border-[#00FF88] transition-colors font-mono"
+                className="flex-1 bg-white border border-[#E5E7EB] rounded-lg px-3 py-2.5 text-sm text-[#111827] outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/10 transition-all"
               />
-              <div className="flex gap-1">
-                {[25, 50, 100, 200].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setAmount(Math.min(preset, balance))}
-                    className="px-2 py-1 text-xs border border-[#1E2130] rounded hover:border-[#00FF88] text-[#8892A4] hover:text-[#00FF88] transition-colors"
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
+              {[25, 50, 100, 250].map((p) => (
+                <button key={p} onClick={() => setAmount(Math.min(p, balance))}
+                  className="px-3 py-2 text-xs font-semibold border border-[#E5E7EB] rounded-lg hover:border-[#16A34A] hover:text-[#16A34A] text-[#6B7280] transition-colors bg-white">
+                  {p}
+                </button>
+              ))}
             </div>
-            <p className="text-xs text-[#4B5563] mt-1">
-              {t('Bakiye', 'Balance')}: ◈{formatCredits(balance)}
-            </p>
+            <p className="text-xs text-[#9CA3AF] mt-1.5">{t('Bakiye', 'Balance')}: ◈{formatCredits(balance)}</p>
           </div>
 
           {/* Payout preview */}
           {selectedSide && (
-            <div className="bg-[#0F1117] border border-[#1E2130] rounded p-3 text-xs">
-              <div className="flex justify-between text-[#8892A4]">
-                <span>{t('Miktar', 'Amount')}</span>
-                <span>◈{formatCredits(amount)}</span>
+            <div className="bg-[#F9FAFB] border border-[#F3F4F6] rounded-xl p-4 text-sm">
+              <div className="flex justify-between text-[#6B7280]">
+                <span>{t('Risk', 'Risk')}</span><span>◈{formatCredits(amount)}</span>
               </div>
-              <div className="flex justify-between text-[#8892A4] mt-1">
-                <span>{t('Oran', 'Odds')}</span>
-                <span>{activeSideOdds}x</span>
+              <div className="flex justify-between text-[#6B7280] mt-1">
+                <span>{t('Oran', 'Odds')}</span><span>{activeSideOdds}x</span>
               </div>
-              <div className="flex justify-between font-bold text-[#00FF88] mt-2 border-t border-[#1E2130] pt-2">
+              <div className="flex justify-between font-bold text-[#16A34A] mt-2 pt-2 border-t border-[#E5E7EB]">
                 <span>{t('Kazanç (kazanırsan)', 'Potential payout')}</span>
                 <span>◈{formatCredits(potentialPayout)}</span>
               </div>
             </div>
           )}
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          {success && <p className="text-xs text-[#00FF88]">{success}</p>}
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          {success && <p className="text-sm text-[#16A34A] font-medium">{success}</p>}
 
-          <Button
-            onClick={handlePlaceBet}
-            disabled={!selectedSide || loading || amount <= 0 || amount > balance}
-            size="lg"
-            className="w-full"
-          >
+          <Button onClick={handlePlaceBet} disabled={!selectedSide || loading || amount <= 0 || amount > balance} size="lg" className="w-full">
             {loading ? t('İşleniyor...', 'Processing...') : t('Bahis Oyna', 'Place Bet')}
           </Button>
         </div>
       )}
 
       {market.status === 'resolved' && (
-        <div className="bg-[#131620] border border-[#1E2130] rounded-lg p-4 text-sm text-center">
-          <span className="text-[#8892A4]">{t('Sonuç', 'Outcome')}: </span>
-          <span className={market.outcome ? 'text-[#00FF88] font-bold' : 'text-red-400 font-bold'}>
-            {market.outcome ? 'YES' : 'NO'}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-4 text-center text-sm">
+          <span className="text-[#6B7280]">{t('Sonuç', 'Outcome')}: </span>
+          <span className={`font-bold ${market.outcome ? 'text-[#16A34A]' : 'text-red-500'}`}>
+            {market.outcome ? t('EVET', 'YES') : t('HAYIR', 'NO')}
           </span>
         </div>
       )}
 
-      {/* User's bets on this market */}
+      {/* User bets */}
       {userBets.length > 0 && (
-        <div className="bg-[#131620] border border-[#1E2130] rounded-lg p-4 flex flex-col gap-3">
-          <h3 className="text-sm font-bold text-[#F0F2F5]">{t('Bahislerim', 'My Bets')}</h3>
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 flex flex-col gap-3">
+          <h3 className="text-sm font-bold text-[#111827]">{t('Bahislerim', 'My Bets')}</h3>
           {userBets.map((bet) => (
-            <div key={bet.id} className="flex items-center justify-between text-xs border-b border-[#1E2130] pb-2 last:border-0 last:pb-0">
-              <span className={bet.side === 'yes' ? 'text-[#00FF88]' : 'text-red-400'}>{bet.side.toUpperCase()}</span>
-              <span className="text-[#8892A4]">◈{formatCredits(bet.amount)}</span>
-              <span className="text-[#8892A4]">{bet.odds_at_bet}x → ◈{formatCredits(bet.potential_payout)}</span>
-              <span className={`${bet.status === 'won' ? 'text-[#00FF88]' : bet.status === 'lost' ? 'text-red-400' : 'text-[#8892A4]'}`}>
+            <div key={bet.id} className="flex items-center justify-between text-sm border-b border-[#F3F4F6] pb-2 last:border-0 last:pb-0">
+              <span className={`font-bold ${bet.side === 'yes' ? 'text-[#16A34A]' : 'text-red-500'}`}>{bet.side.toUpperCase()}</span>
+              <span className="text-[#6B7280]">◈{formatCredits(bet.amount)}</span>
+              <span className="text-[#6B7280]">{bet.odds_at_bet}x</span>
+              <span className="text-[#9CA3AF]">→ ◈{formatCredits(bet.potential_payout)}</span>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
+                bet.status === 'won' ? 'bg-[#F0FDF4] text-[#16A34A]' :
+                bet.status === 'lost' ? 'bg-red-50 text-red-500' : 'bg-[#F9FAFB] text-[#9CA3AF]'
+              }`}>
                 {bet.status === 'won' ? t('KAZANDI', 'WON') : bet.status === 'lost' ? t('KAYBETTİ', 'LOST') : t('Bekliyor', 'Pending')}
               </span>
             </div>
