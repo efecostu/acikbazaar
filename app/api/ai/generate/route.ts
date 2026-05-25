@@ -14,54 +14,63 @@ export async function POST(req: Request) {
 
   const { region = 'turkey', category = 'economy', count = 3 } = await req.json();
 
-  const response = await client.messages.create({
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Use web search so Claude knows what's actually happening right now
+  const response = await client.beta.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2500,
+    max_tokens: 3000,
+    betas: ['web-search-2025-03-05'],
+    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
     messages: [{
       role: 'user',
-      content: `
-        Generate ${count} prediction market questions for AçıkBazaar, a free simulation platform (no real money).
-        Region: ${region} | Category: ${category}
-        Current date: ${new Date().toISOString()}
+      content: `Today is ${today}. You are generating prediction markets for AçıkBazaar (free simulation, no real money).
 
-        Category guide:
-        - politics: Elections, government decisions, geopolitical outcomes
-        - economy: Interest rates, exchange rates, inflation, stock indices (TCMB, Fed, BIST, TL/USD)
-        - sports: Football, basketball, F1 — Turkish leagues and international (Süper Lig, Fenerbahçe, Galatasaray)
-        - tech: AI releases, crypto prices, startup milestones (OpenAI, Bitcoin, Turkish unicorns)
-        - world: International events outside Turkey's domestic scope
-        - entertainment: Music, film, TV — especially Turkish pop culture (Tarkan, dizi, Emmy, Cannes)
-        - weather: Extreme weather events, seasonal records (Istanbul flooding, heatwaves, snowfall)
+STEP 1 — Search the web for recent news in: category="${category}", region="${region}".
+Find events that are UPCOMING or IN PROGRESS — things that have NOT been decided yet.
+Specifically avoid anything that already has a known result as of today.
 
-        Rules:
-        - Binary YES/NO questions only
-        - Verifiable with public, official sources
-        - Resolves within 1–8 months from today
-        - Titles must be concise and punchy (max 12 words)
-        - initial_yes_prob: realistic probability between 0.05 and 0.95
-        - simulated_volume: realistic total credits wagered (500–500000 depending on topic popularity)
-        - tag: one of "hot", "trending", "🔥", or null — use sparingly (max 1 per batch)
+STEP 2 — Generate ${count} binary YES/NO prediction market(s) based on what you found.
 
-        Return ONLY a JSON array, no markdown:
-        [
-          {
-            "title_en": "Will X happen before Y?",
-            "title_tr": "X, Y tarihinden önce olur mu?",
-            "description_en": "Brief verifiable context (1-2 sentences)",
-            "description_tr": "Kısa doğrulanabilir açıklama",
-            "category": "${category}",
-            "region": "${region}",
-            "initial_yes_prob": 0.45,
-            "simulated_volume": 45000,
-            "ends_at": "2025-10-31",
-            "tag": null
-          }
-        ]
-      `,
+Category guide:
+- politics: Elections, government decisions, geopolitical outcomes
+- economy: Interest rates, FX rates, inflation, indices (TCMB, Fed, BIST, USD/TRY)
+- sports: Turkish & international — upcoming matches, season outcomes, transfers
+- tech: AI model releases, crypto prices, startup news
+- world: International events outside Turkey
+- entertainment: Music, film, TV — Turkish pop culture & international
+- weather: Extreme weather forecasts, seasonal records
+
+Rules:
+- ONLY events that have NOT happened yet as of ${today}
+- Resolves within 1–8 months from today (ends_at must be > ${today})
+- Binary YES/NO, verifiable with public sources
+- Punchy titles, max 12 words
+- initial_yes_prob: realistic 0.05–0.95 based on current odds/sentiment
+- simulated_volume: 500–500000 depending on topic popularity
+- tag: "hot", "trending", "🔥", or null (max 1 per batch)
+
+Return ONLY a valid JSON array (no markdown, no explanation):
+[
+  {
+    "title_en": "Will X happen before Y?",
+    "title_tr": "X, Y tarihinden önce olur mu?",
+    "description_en": "Brief verifiable resolution criteria (1-2 sentences)",
+    "description_tr": "Kısa doğrulanabilir açıklama",
+    "category": "${category}",
+    "region": "${region}",
+    "initial_yes_prob": 0.55,
+    "simulated_volume": 35000,
+    "ends_at": "2026-09-30",
+    "tag": null
+  }
+]`,
     }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '[]';
+  // Extract the final text block (after tool calls)
+  const textBlock = response.content.findLast((c) => c.type === 'text');
+  const text = textBlock?.type === 'text' ? textBlock.text : '[]';
 
   let markets: Record<string, unknown>[];
   try {
