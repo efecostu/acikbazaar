@@ -7,42 +7,62 @@ import type { Market } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
+const d = (days: number) => new Date(Date.now() + days * 864e5).toISOString();
+
 const DEMO_MARKETS: Market[] = [
   {
-    id: '1', title_en: 'Will TCMB cut rates before end of Q3 2025?', title_tr: 'TCMB 2025 Q3 sonuna kadar faiz indirir mi?',
-    description_en: null, description_tr: null, category: 'economy', region: 'turkey',
-    yes_prob: 0.67, yes_pool: 48200, no_pool: 23800, total_volume: 72000, participant_count: 312,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 130 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000001',
+    title_en: 'Will Galatasaray win the 2024-25 Süper Lig?',
+    title_tr: 'Galatasaray 2024-25 Süper Ligi şampiyon bitirir mi?',
+    description_en: 'Based on final Süper Lig standings.', description_tr: 'Sezon sonu puan tablosuna göre.',
+    category: 'sports', region: 'turkey', yes_prob: 0.74, tag: 'trending', status: 'active', outcome: null,
+    ends_at: d(61), created_at: new Date().toISOString(),
+    yes_pool: 64676, no_pool: 22724, total_volume: 87400, participant_count: 741,
   },
   {
-    id: '2', title_en: 'Will USD/TRY exceed 40 before July 2025?', title_tr: 'USD/TRY Temmuz 2025\'ten önce 40\'ı geçer mi?',
-    description_en: null, description_tr: null, category: 'economy', region: 'turkey',
-    yes_prob: 0.44, yes_pool: 27000, no_pool: 34500, total_volume: 61500, participant_count: 489,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 50 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000004',
+    title_en: 'Will TCMB cut rates before end of Q3 2025?',
+    title_tr: 'TCMB 2025 Q3 sonuna kadar faiz indirir mi?',
+    description_en: 'At least 25bps cut counts as YES.', description_tr: 'En az 25 baz puanlık indirim EVET sayılır.',
+    category: 'economy', region: 'turkey', yes_prob: 0.67, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(130), created_at: new Date().toISOString(),
+    yes_pool: 48240, no_pool: 23760, total_volume: 72000, participant_count: 312,
   },
   {
-    id: '3', title_en: 'Will CHP win Istanbul mayoral election in 2025?', title_tr: 'CHP 2025 İstanbul Büyükşehir seçimini kazanır mı?',
-    description_en: null, description_tr: null, category: 'politics', region: 'turkey',
-    yes_prob: 0.72, yes_pool: 67000, no_pool: 26400, total_volume: 93400, participant_count: 741,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 200 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000010',
+    title_en: 'Will CHP win Istanbul mayoral election in 2025?',
+    title_tr: 'CHP 2025 İstanbul Büyükşehir seçimini kazanır mı?',
+    description_en: 'Based on official YSK results.', description_tr: 'YSK resmi sonuçlarına göre.',
+    category: 'politics', region: 'turkey', yes_prob: 0.72, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(200), created_at: new Date().toISOString(),
+    yes_pool: 67248, no_pool: 26152, total_volume: 93400, participant_count: 741,
   },
   {
-    id: '4', title_en: 'Will Fenerbahçe win the Süper Lig title 2024-25?', title_tr: 'Fenerbahçe 2024-25 Süper Lig şampiyonu olur mu?',
-    description_en: null, description_tr: null, category: 'sports', region: 'turkey',
-    yes_prob: 0.51, yes_pool: 17700, no_pool: 17100, total_volume: 34800, participant_count: 628,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 5 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000008',
+    title_en: 'Will Bitcoin hit $120K before 2026?',
+    title_tr: 'Bitcoin 2026 öncesinde 120.000$\'a ulaşır mı?',
+    description_en: 'CoinGecko 24h average.', description_tr: 'CoinGecko 24 saatlik ortalama.',
+    category: 'tech', region: 'global', yes_prob: 0.48, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(153), created_at: new Date().toISOString(),
+    yes_pool: 149760, no_pool: 162240, total_volume: 312000, participant_count: 2341,
   },
   {
-    id: '5', title_en: 'Will the Fed cut rates in June 2025?', title_tr: 'Fed Haziran 2025\'te faiz indirir mi?',
-    description_en: null, description_tr: null, category: 'economy', region: 'global',
-    yes_prob: 0.38, yes_pool: 83000, no_pool: 135000, total_volume: 218000, participant_count: 1842,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 28 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000013',
+    title_en: 'Will Tarkan release a new album or single in 2025?',
+    title_tr: 'Tarkan 2025 yılında yeni albüm veya single çıkarır mı?',
+    description_en: 'Official music release on major platforms.', description_tr: 'Büyük platformlarda resmi müzik yayını.',
+    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: '🔥', status: 'active', outcome: null,
+    ends_at: d(220), created_at: new Date().toISOString(),
+    yes_pool: 13260, no_pool: 6240, total_volume: 19500, participant_count: 281,
   },
   {
-    id: '6', title_en: 'Will OpenAI release GPT-5 before August 2025?', title_tr: 'OpenAI GPT-5\'i Ağustos 2025 öncesinde yayınlar mı?',
-    description_en: null, description_tr: null, category: 'tech', region: 'global',
-    yes_prob: 0.61, yes_pool: 53000, no_pool: 34300, total_volume: 87300, participant_count: 934,
-    status: 'active', outcome: null, ends_at: new Date(Date.now() + 70 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000014',
+    title_en: 'Will Istanbul experience a flash flood warning in Summer 2025?',
+    title_tr: 'İstanbul\'da 2025 yazında sel uyarısı verilir mi?',
+    description_en: 'Based on official AFAD or meteorology warnings.', description_tr: 'AFAD veya meteoroloji resmi uyarısına göre.',
+    category: 'weather', region: 'turkey', yes_prob: 0.79, tag: null, status: 'active', outcome: null,
+    ends_at: d(100), created_at: new Date().toISOString(),
+    yes_pool: 11218, no_pool: 2982, total_volume: 14200, participant_count: 188,
   },
 ];
 
@@ -104,9 +124,9 @@ export default async function LandingPage() {
           <div className="flex gap-8 py-6 border-y border-[#F3F4F6] mb-12">
             {[
               { val: '10K+', label: 'Aktif tahmin' },
-              { val: '◈2.4M', label: 'İşlem hacmi' },
+              { val: '◈4.8M', label: 'İşlem hacmi' },
               { val: '%100', label: 'Ücretsiz' },
-              { val: '5+', label: 'Kategori' },
+              { val: '7', label: 'Kategori' },
             ].map((s) => (
               <div key={s.label}>
                 <div className="text-xl font-bold text-[#111827]">{s.val}</div>

@@ -3,73 +3,155 @@ import type { Market } from '@/types';
 
 export const revalidate = 30;
 
-const DEMO_MARKETS: Market[] = [
+// Gerçekçi simüle havuzlar: favori taraf daha büyük
+function pools(prob: number, volume: number, participants: number) {
+  return {
+    yes_pool: Math.floor(volume * prob),
+    no_pool: Math.floor(volume * (1 - prob)),
+    total_volume: volume,
+    participant_count: participants,
+  };
+}
+
+const d = (days: number) => new Date(Date.now() + days * 864e5).toISOString();
+
+export const DEMO_MARKETS: Market[] = [
+  // SPOR
   {
-    id: '1', title_en: 'Will TCMB cut rates before end of Q3 2025?', title_tr: 'TCMB 2025 Q3 sonuna kadar faiz indirir mi?',
-    description_en: 'Based on TCMB MPC meeting decisions. At least one 25bps cut counts as YES.', description_tr: 'TCMB PPK toplantı kararlarına göre. En az 25 baz puanlık indirim YES sayılır.',
-    category: 'economy', region: 'turkey', yes_prob: 0.67, yes_pool: 48200, no_pool: 23800,
-    total_volume: 72000, participant_count: 312, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 130 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000001',
+    title_en: 'Will Galatasaray win the 2024-25 Süper Lig?',
+    title_tr: 'Galatasaray 2024-25 Süper Ligi şampiyon bitirir mi?',
+    description_en: 'Based on final Süper Lig standings.', description_tr: 'Sezon sonu puan tablosuna göre.',
+    category: 'sports', region: 'turkey', yes_prob: 0.74, tag: 'trending', status: 'active', outcome: null,
+    ends_at: d(61), created_at: new Date().toISOString(),
+    ...pools(0.74, 87400, 741),
   },
   {
-    id: '2', title_en: 'Will USD/TRY exceed 40 before July 2025?', title_tr: 'USD/TRY Temmuz 2025\'ten önce 40\'ı geçer mi?',
-    description_en: 'Based on TCMB official exchange rates.', description_tr: 'TCMB resmi kur verilerine göre.',
-    category: 'economy', region: 'turkey', yes_prob: 0.44, yes_pool: 27000, no_pool: 34500,
-    total_volume: 61500, participant_count: 489, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 50 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000002',
+    title_en: 'Will Fenerbahçe qualify for Champions League 24-25?',
+    title_tr: 'Fenerbahçe 2024-25 sezonunda Şampiyonlar Ligi\'ne kalır mı?',
+    description_en: null, description_tr: null,
+    category: 'sports', region: 'turkey', yes_prob: 0.51, tag: null, status: 'active', outcome: null,
+    ends_at: d(5), created_at: new Date().toISOString(),
+    ...pools(0.51, 34800, 628),
   },
   {
-    id: '3', title_en: 'Will CHP win Istanbul mayoral election in 2025?', title_tr: 'CHP 2025 İBB seçimini kazanır mı?',
+    id: 'f1a2b3c4-0001-0001-0001-000000000003',
+    title_en: 'Will Turkey qualify top of their 2026 World Cup group?',
+    title_tr: 'Türkiye 2026 Dünya Kupası elemelerinde grup birincisi olur mu?',
+    description_en: null, description_tr: null,
+    category: 'sports', region: 'turkey', yes_prob: 0.58, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(180), created_at: new Date().toISOString(),
+    ...pools(0.58, 52000, 490),
+  },
+  // EKONOMİ
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000004',
+    title_en: 'Will TCMB cut rates before end of Q3 2025?',
+    title_tr: 'TCMB 2025 Q3 sonuna kadar faiz indirir mi?',
+    description_en: 'At least 25bps cut counts as YES.', description_tr: 'En az 25 baz puanlık indirim EVET sayılır.',
+    category: 'economy', region: 'turkey', yes_prob: 0.67, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(130), created_at: new Date().toISOString(),
+    ...pools(0.67, 72000, 312),
+  },
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000005',
+    title_en: 'Will USD/TRY exceed 40 before October 2025?',
+    title_tr: 'USD/TRY Ekim 2025\'ten önce 40\'ı geçer mi?',
+    description_en: 'Based on TCMB official rates.', description_tr: 'TCMB resmi kuruna göre.',
+    category: 'economy', region: 'turkey', yes_prob: 0.44, tag: null, status: 'active', outcome: null,
+    ends_at: d(123), created_at: new Date().toISOString(),
+    ...pools(0.44, 61500, 489),
+  },
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000006',
+    title_en: 'Will the Fed cut rates at least once before December 2025?',
+    title_tr: 'Fed Aralık 2025\'ten önce en az bir faiz indirimi yapar mı?',
+    description_en: 'Based on FOMC decisions.', description_tr: 'FOMC kararlarına göre.',
+    category: 'economy', region: 'global', yes_prob: 0.55, tag: null, status: 'active', outcome: null,
+    ends_at: d(184), created_at: new Date().toISOString(),
+    ...pools(0.55, 218000, 1842),
+  },
+  // TEKNOLOJİ
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000007',
+    title_en: 'Will OpenAI release GPT-5 before August 2025?',
+    title_tr: 'OpenAI GPT-5\'i Ağustos 2025 öncesinde yayınlar mı?',
+    description_en: null, description_tr: null,
+    category: 'tech', region: 'global', yes_prob: 0.61, tag: null, status: 'active', outcome: null,
+    ends_at: d(70), created_at: new Date().toISOString(),
+    ...pools(0.61, 87300, 934),
+  },
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000008',
+    title_en: 'Will Bitcoin hit $120K before 2026?',
+    title_tr: 'Bitcoin 2026 öncesinde 120.000$\'a ulaşır mı?',
+    description_en: 'CoinGecko 24h average.', description_tr: 'CoinGecko 24 saatlik ortalama.',
+    category: 'tech', region: 'global', yes_prob: 0.48, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(153), created_at: new Date().toISOString(),
+    ...pools(0.48, 312000, 2341),
+  },
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000009',
+    title_en: 'Will a new Turkish unicorn emerge in 2025?',
+    title_tr: '2025\'te yeni bir Türk unicorn\'u ortaya çıkar mı?',
+    description_en: null, description_tr: null,
+    category: 'tech', region: 'turkey', yes_prob: 0.35, tag: null, status: 'active', outcome: null,
+    ends_at: d(184), created_at: new Date().toISOString(),
+    ...pools(0.35, 10000, 170),
+  },
+  // SİYASET
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000010',
+    title_en: 'Will CHP win Istanbul mayoral election in 2025?',
+    title_tr: 'CHP 2025 İstanbul Büyükşehir seçimini kazanır mı?',
     description_en: 'Based on official YSK results.', description_tr: 'YSK resmi sonuçlarına göre.',
-    category: 'politics', region: 'turkey', yes_prob: 0.72, yes_pool: 67000, no_pool: 26400,
-    total_volume: 93400, participant_count: 741, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 200 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    category: 'politics', region: 'turkey', yes_prob: 0.72, tag: 'hot', status: 'active', outcome: null,
+    ends_at: d(200), created_at: new Date().toISOString(),
+    ...pools(0.72, 93400, 741),
   },
   {
-    id: '4', title_en: 'Will Fenerbahçe win the Süper Lig title 2024-25?', title_tr: 'Fenerbahçe 2024-25 Süper Lig şampiyonu olur mu?',
-    description_en: 'Based on final Süper Lig standings.', description_tr: 'Sezon sonu Süper Lig puan tablosuna göre.',
-    category: 'sports', region: 'turkey', yes_prob: 0.51, yes_pool: 17700, no_pool: 17100,
-    total_volume: 34800, participant_count: 628, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 5 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000011',
+    title_en: 'Will EU restart Turkey accession talks in 2025?',
+    title_tr: 'AB 2025\'te Türkiye ile katılım müzakerelerine yeniden başlar mı?',
+    description_en: null, description_tr: null,
+    category: 'politics', region: 'turkey', yes_prob: 0.12, tag: null, status: 'active', outcome: null,
+    ends_at: d(210), created_at: new Date().toISOString(),
+    ...pools(0.12, 8900, 76),
+  },
+  // EĞLENCE
+  {
+    id: 'f1a2b3c4-0001-0001-0001-000000000012',
+    title_en: 'Will a Turkish series win an international Emmy in 2025?',
+    title_tr: 'Bir Türk dizisi 2025\'te uluslararası Emmy kazanır mı?',
+    description_en: 'International Emmy Awards 2025 ceremony.', description_tr: 'Uluslararası Emmy Ödülleri 2025 töreni.',
+    category: 'entertainment', region: 'turkey', yes_prob: 0.42, tag: null, status: 'active', outcome: null,
+    ends_at: d(190), created_at: new Date().toISOString(),
+    ...pools(0.42, 28000, 390),
   },
   {
-    id: '5', title_en: 'Will the Fed cut rates in June 2025?', title_tr: 'Fed Haziran 2025\'te faiz indirir mi?',
-    description_en: 'FOMC June meeting decision. A 25bps cut counts as YES.', description_tr: 'FOMC Haziran toplantısı. 25 baz puan indirim YES sayılır.',
-    category: 'economy', region: 'global', yes_prob: 0.38, yes_pool: 83000, no_pool: 135000,
-    total_volume: 218000, participant_count: 1842, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 28 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000013',
+    title_en: 'Will Tarkan release a new album or single in 2025?',
+    title_tr: 'Tarkan 2025 yılında yeni albüm veya single çıkarır mı?',
+    description_en: 'Official music release on major platforms.', description_tr: 'Büyük platformlarda resmi müzik yayını.',
+    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: '🔥', status: 'active', outcome: null,
+    ends_at: d(220), created_at: new Date().toISOString(),
+    ...pools(0.68, 19500, 281),
   },
+  // HAVA DURUMU
   {
-    id: '6', title_en: 'Will OpenAI release GPT-5 before August 2025?', title_tr: 'OpenAI GPT-5\'i Ağustos 2025 öncesinde yayınlar mı?',
-    description_en: 'Official OpenAI announcement or API access qualifies.', description_tr: 'Resmi OpenAI duyurusu veya API erişimi.',
-    category: 'tech', region: 'global', yes_prob: 0.61, yes_pool: 53000, no_pool: 34300,
-    total_volume: 87300, participant_count: 934, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 70 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
-  },
-  {
-    id: '7', title_en: 'Will Bitcoin hit $120K before end of 2025?', title_tr: 'Bitcoin 2025 sonuna kadar 120.000$\'a ulaşır mı?',
-    description_en: 'CoinGecko 24h average. Single-day close above $120K qualifies.', description_tr: 'CoinGecko 24 saatlik ortalama. Tek günlük 120K$ üzeri kapanış yeterlidir.',
-    category: 'tech', region: 'global', yes_prob: 0.55, yes_pool: 171000, no_pool: 141000,
-    total_volume: 312000, participant_count: 2341, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 220 * 864e5).toISOString(), tag: 'hot', created_at: new Date().toISOString(),
-  },
-  {
-    id: '8', title_en: 'Will Erdoğan attend G20 summit 2025?', title_tr: 'Erdoğan 2025 G20 zirvesine katılır mı?',
-    description_en: 'Based on official Turkish government attendance at G20 South Africa 2025.', description_tr: 'Türk hükümetinin G20 Güney Afrika 2025\'e katılımına göre.',
-    category: 'politics', region: 'turkey', yes_prob: 0.83, yes_pool: 10100, no_pool: 2000,
-    total_volume: 12100, participant_count: 98, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 180 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
-  },
-  {
-    id: '9', title_en: 'Will EU start Turkey accession talks again in 2025?', title_tr: 'AB 2025\'te Türkiye ile katılım müzakerelerine yeniden başlar mı?',
-    description_en: 'Official EU Council decision to open new accession chapters with Turkey.', description_tr: 'AB Konseyi\'nin Türkiye ile yeni müzakere fasılları açma kararı.',
-    category: 'politics', region: 'turkey', yes_prob: 0.12, yes_pool: 1100, no_pool: 7800,
-    total_volume: 8900, participant_count: 76, status: 'active', outcome: null,
-    ends_at: new Date(Date.now() + 210 * 864e5).toISOString(), tag: null, created_at: new Date().toISOString(),
+    id: 'f1a2b3c4-0001-0001-0001-000000000014',
+    title_en: 'Will Istanbul experience a flash flood warning in Summer 2025?',
+    title_tr: 'İstanbul\'da 2025 yazında sel uyarısı verilir mi?',
+    description_en: 'Based on official AFAD or meteorology warnings.', description_tr: 'AFAD veya meteoroloji resmi uyarısına göre.',
+    category: 'weather', region: 'turkey', yes_prob: 0.79, tag: null, status: 'active', outcome: null,
+    ends_at: d(100), created_at: new Date().toISOString(),
+    ...pools(0.79, 14200, 188),
   },
 ];
 
-const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
+const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL
+  || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
 
 export default async function MarketsPage() {
   if (DEMO_MODE) return <MarketsClient markets={DEMO_MARKETS} />;
@@ -77,7 +159,10 @@ export default async function MarketsPage() {
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data: markets } = await supabase
-    .from('markets').select('*').eq('status', 'active').order('created_at', { ascending: false });
+    .from('markets')
+    .select('*')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false });
 
   return <MarketsClient markets={markets ?? []} />;
 }

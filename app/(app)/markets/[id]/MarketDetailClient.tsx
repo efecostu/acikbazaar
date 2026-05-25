@@ -6,9 +6,10 @@ import { Market, Bet, BetSide } from '@/types';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
 import { calculateOdds, calculatePayout } from '@/lib/odds';
-import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate } from '@/lib/utils';
+import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate, getAIFavorites } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { AIFavorites } from '@/components/AIFavorites';
 
 interface Props {
   market: Market;
@@ -96,6 +97,9 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
           <span>EVET {yesOdds}x · HAYIR {noOdds}x</span>
         </div>
       </div>
+
+      {/* AI Favorites */}
+      <AIFavorites favorites={getAIFavorites(market.id, yesProb)} />
 
       {/* Bet panel */}
       {market.status === 'active' && (

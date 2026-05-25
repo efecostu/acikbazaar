@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL
+  || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -16,17 +19,16 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (IS_DEMO) {
+      setError('Demo moddasın — giriş için gerçek bir Supabase projesi bağlaman gerekiyor.');
+      return;
+    }
     setLoading(true);
     setError('');
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push('/markets');
-      router.refresh();
-    }
+    if (error) { setError(error.message); setLoading(false); }
+    else { router.push('/markets'); router.refresh(); }
   }
 
   return (
@@ -39,6 +41,13 @@ export default function LoginPage() {
           </Link>
           <p className="text-sm text-[#6B7280] mt-2">Açıkça tahmin et. Özgürce oyna.</p>
         </div>
+
+        {IS_DEMO && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
+            <p className="font-semibold text-amber-800 mb-1">⚠️ Demo modu aktif</p>
+            Giriş yapmak için <code className="bg-amber-100 px-1 rounded">.env.local</code>'a gerçek Supabase bilgilerini ekle ve dev server'ı yeniden başlat.
+          </div>
+        )}
 
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#111827] mb-5">Giriş Yap</h2>
@@ -56,15 +65,13 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" size="lg" disabled={loading} className="w-full mt-1">
-              {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              {loading ? 'Giriş yapılıyor...' : IS_DEMO ? 'Giriş Yap (Demo)' : 'Giriş Yap'}
             </Button>
           </form>
 
           <p className="text-center text-sm text-[#6B7280] mt-4">
             Hesabın yok mu?{' '}
-            <Link href="/register" className="text-[#16A34A] font-semibold hover:underline">
-              Kayıt Ol
-            </Link>
+            <Link href="/register" className="text-[#16A34A] font-semibold hover:underline">Kayıt Ol</Link>
           </p>
         </div>
       </div>

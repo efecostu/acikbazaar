@@ -7,7 +7,7 @@ import { useLang } from '@/contexts/LangContext';
 import { categoryLabel } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
-const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world'];
+const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 const REGIONS: (MarketRegion | 'all')[] = ['all', 'turkey', 'global'];
 
 interface Props { markets: Market[] }

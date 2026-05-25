@@ -1,4 +1,4 @@
-export type MarketCategory = 'politics' | 'economy' | 'sports' | 'tech' | 'world';
+export type MarketCategory = 'politics' | 'economy' | 'sports' | 'tech' | 'world' | 'entertainment' | 'weather';
 export type MarketRegion = 'turkey' | 'global';
 export type MarketStatus = 'active' | 'closed' | 'resolved';
 export type BetSide = 'yes' | 'no';
@@ -54,6 +54,13 @@ export interface LeaderboardEntry {
   total_won: number;
   profit: number;
   win_rate: number;
+}
+
+export interface AIFavorite {
+  name: string;
+  prob: number;
+  color: string;
+  bgColor: string;
 }
 
 export type Lang = 'tr' | 'en';

@@ -7,6 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL
+  || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
+
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -17,6 +20,10 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (IS_DEMO) {
+      setError('Demo moddasın — kayıt için gerçek bir Supabase projesi bağlaman gerekiyor. Aşağıdaki kurulum adımlarına bak.');
+      return;
+    }
     setLoading(true);
     setError('');
     if (username.length < 3) {
@@ -50,6 +57,20 @@ export default function RegisterPage() {
           <p className="text-sm text-[#6B7280] mt-2">Predict openly. Play freely.</p>
         </div>
 
+        {IS_DEMO && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm">
+            <p className="font-semibold text-amber-800 mb-2">⚠️ Demo modu aktif</p>
+            <p className="text-amber-700 mb-3">Kayıt olmak için bir Supabase projesi bağlaman gerekiyor. Adımlar:</p>
+            <ol className="text-amber-700 space-y-1 text-xs list-decimal list-inside">
+              <li><a href="https://supabase.com" target="_blank" rel="noreferrer" className="underline font-medium">supabase.com</a>'da ücretsiz proje oluştur</li>
+              <li>Project Settings → API'den URL ve anon key'i kopyala</li>
+              <li><code className="bg-amber-100 px-1 rounded">.env.local</code> dosyasını güncelle</li>
+              <li><code className="bg-amber-100 px-1 rounded">supabase-schema.sql</code>'i SQL Editor'da çalıştır</li>
+              <li>Dev server'ı yeniden başlat</li>
+            </ol>
+          </div>
+        )}
+
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#111827] mb-1">Kayıt Ol</h2>
           <p className="text-sm text-[#6B7280] mb-5">Başlangıç kredisi: <span className="font-semibold text-[#16A34A]">◈1,000</span></p>
@@ -69,15 +90,13 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" size="lg" disabled={loading} className="w-full mt-1">
-              {loading ? 'Hesap oluşturuluyor...' : 'Kayıt Ol & Başla'}
+              {loading ? 'Hesap oluşturuluyor...' : IS_DEMO ? 'Kayıt Ol (Demo)' : 'Kayıt Ol & Başla'}
             </Button>
           </form>
 
           <p className="text-center text-sm text-[#6B7280] mt-4">
             Zaten hesabın var mı?{' '}
-            <Link href="/login" className="text-[#16A34A] font-semibold hover:underline">
-              Giriş Yap
-            </Link>
+            <Link href="/login" className="text-[#16A34A] font-semibold hover:underline">Giriş Yap</Link>
           </p>
         </div>
       </div>
