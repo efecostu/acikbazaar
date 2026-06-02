@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --bg: #FFFFFF;
   --bg-alt: #F9FAFB;
@@ -20,6 +22,21 @@
   --text-3: #9CA3AF;
 }
 
+.dark {
+  --bg: #0F172A;
+  --bg-alt: #1E293B;
+  --bg-card: #1E293B;
+  --border: #334155;
+  --border-light: #1E293B;
+
+  --green-light: #14532D;
+  --red-light: #450A0A;
+
+  --text: #F1F5F9;
+  --text-2: #94A3B8;
+  --text-3: #64748B;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -27,6 +44,7 @@ body {
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
