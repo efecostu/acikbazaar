@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 export const dynamic = 'force-dynamic';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const REPORT_EMAIL = 'efecostu01@gmail.com';
+const REPORT_EMAILS = ['efecostu01@gmail.com', 'eminaliozturk@gmail.com'];
 
 export async function GET() {
   const headerStore = await headers();
@@ -193,7 +193,7 @@ export async function GET() {
 
   const { error } = await resend.emails.send({
     from: 'AçıkBazaar <onboarding@resend.dev>',
-    to: REPORT_EMAIL,
+    to: REPORT_EMAILS,
     subject: `◈ AçıkBazaar Günlük Rapor — ${today}`,
     html,
   });
@@ -202,5 +202,5 @@ export async function GET() {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ sent: true, to: REPORT_EMAIL, date: today });
+  return Response.json({ sent: true, to: REPORT_EMAILS, date: today });
 }
