@@ -2,74 +2,155 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   AçıkBazaar token sistemi
+   Kimlik: döviz bürosu tabelası × modern tahmin pazarı
+   paper/ink: yeşil altımsı nötrler · board: tabela paneli
+   rise/fall: EVET/HAYIR · copper: çarşı bakırı (rozetler)
+   ============================================================ */
+
 :root {
-  --bg: #FFFFFF;
-  --bg-alt: #F9FAFB;
-  --bg-card: #FFFFFF;
-  --border: #E5E7EB;
-  --border-light: #F3F4F6;
+  --paper: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface-2: #F1F0EB;
+  --border: #E4E2DA;
+  --border-light: #EFEDE7;
 
-  --green: #16A34A;
-  --green-light: #DCFCE7;
+  --ink: #171D1A;
+  --ink-2: #5C6660;
+  --ink-3: #98A29B;
+
+  --board: #0C1F16;
+  --board-line: #1C3428;
+  --board-text: #7C9B8A;
+
+  --rise: #0BA05F;
+  --rise-bright: #2FD588;
+  --rise-soft: #E3F5EC;
+  --rise-line: #BCE5D1;
+
+  --fall: #D93036;
+  --fall-bright: #FF7A70;
+  --fall-soft: #FCEAEA;
+  --fall-line: #F3C8C6;
+
+  --copper: #B4652F;
+  --copper-soft: #F7EADF;
+  --copper-line: #E8CDB4;
+
+  /* Eski isimler — dokunulmayan sayfalar için köprü */
+  --bg: var(--paper);
+  --bg-alt: var(--surface-2);
+  --bg-card: var(--surface);
+  --green: var(--rise);
+  --green-light: var(--rise-soft);
   --green-dark: #14532D;
-  --green-mid: #22C55E;
-
-  --red: #DC2626;
-  --red-light: #FEE2E2;
-
-  --text: #111827;
-  --text-2: #6B7280;
-  --text-3: #9CA3AF;
+  --green-mid: var(--rise-bright);
+  --red: var(--fall);
+  --red-light: var(--fall-soft);
+  --text: var(--ink);
+  --text-2: var(--ink-2);
+  --text-3: var(--ink-3);
 }
 
 .dark {
-  --bg: #0F172A;
-  --bg-alt: #1E293B;
-  --bg-card: #1E293B;
+  --paper: #0F172A;
+  --surface: #1E293B;
+  --surface-2: #16202F;
   --border: #334155;
-  --border-light: #1E293B;
+  --border-light: #26334A;
 
-  --green-light: #14532D;
-  --red-light: #450A0A;
+  --ink: #F1F5F9;
+  --ink-2: #94A3B8;
+  --ink-3: #64748B;
 
-  --text: #F1F5F9;
-  --text-2: #94A3B8;
-  --text-3: #64748B;
+  --board: #081711;
+  --board-line: #1C3428;
+  --board-text: #6B8A7A;
+
+  --rise-soft: #10291D;
+  --rise-line: #1E4230;
+  --fall-soft: #2C1516;
+  --fall-line: #4A2223;
+  --copper-soft: #2B1D10;
+  --copper-line: #4A3319;
+
+  --bg: var(--paper);
+  --bg-alt: var(--surface-2);
+  --bg-card: var(--surface);
+  --green-light: var(--rise-soft);
+  --red-light: var(--fall-soft);
+  --text: var(--ink);
+  --text-2: var(--ink-2);
+  --text-3: var(--ink-3);
 }
 
 * { box-sizing: border-box; }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Tip rolleri */
+.font-display {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  letter-spacing: -0.01em;
+}
+.font-data {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--bg-alt); }
+::-webkit-scrollbar-track { background: var(--surface-2); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ============================================================
+   İmza: tabela şeridi — döviz bürosu kotasyon paneli
+   ============================================================ */
+.tabela {
+  background: var(--board);
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+.tabela-label {
+  color: var(--board-text);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.tabela-rise { color: var(--rise-bright); }
+.tabela-fall { color: var(--fall-bright); }
+.tabela-divider { background: var(--board-line); }
 
 /* Market card hover */
 .market-card {
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 .market-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-color: #D1D5DB;
+  box-shadow: 0 6px 20px rgba(12, 31, 22, 0.09);
+  border-color: var(--ink-3);
+  transform: translateY(-1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .market-card, .market-card:hover { transform: none; transition: none; }
+  .prob-bar-fill { transition: none; }
 }
 
 /* Prob bar */
 .prob-bar {
   height: 5px;
   border-radius: 99px;
-  background: var(--red-light);
+  background: var(--fall-soft);
   overflow: hidden;
 }
 .prob-bar-fill {
   height: 100%;
   border-radius: 99px;
-  background: var(--green);
+  background: var(--rise);
   transition: width 0.4s ease;
 }

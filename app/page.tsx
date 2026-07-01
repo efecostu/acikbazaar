@@ -77,19 +77,22 @@ export default async function LandingPage() {
 
   return (
     <LangProvider>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[var(--paper)]">
         {/* Nav */}
-        <nav className="border-b border-[#E5E7EB] bg-white sticky top-0 z-50">
+        <nav className="border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-[#16A34A] font-bold text-lg">◈</span>
-              <span className="text-sm font-bold text-[#111827]">AçıkBazaar</span>
+              <span className="text-[var(--rise)] font-bold text-lg">◈</span>
+              <span className="font-display text-[15px] font-bold text-[var(--ink)]">AçıkBazaar</span>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/login" className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors px-3 py-1.5">
+              <Link href="/markets" className="hidden sm:block text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
+                Marketler
+              </Link>
+              <Link href="/login" className="text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
                 Giriş Yap
               </Link>
-              <Link href="/register" className="bg-[#16A34A] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:bg-[#15803D] transition-colors">
+              <Link href="/register" className="bg-[var(--rise)] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:brightness-110 transition-all">
                 Ücretsiz Başla
               </Link>
             </div>
@@ -98,30 +101,30 @@ export default async function LandingPage() {
 
         {/* Hero */}
         <section className="max-w-7xl mx-auto px-4 pt-16 pb-10">
-          <div className="max-w-2xl mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#F0FDF4] border border-[#BBF7D0] rounded-full px-3 py-1 text-xs font-semibold text-[#16A34A] mb-5">
-              ◈ Gerçek para yok — tamamen ücretsiz
+          <div className="max-w-2xl mb-14">
+            <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-5">
+              Türkiye&apos;nin tahmin pazarı
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#111827] leading-tight tracking-tight mb-4">
-              Gerçek hayat eventlerine<br />
-              <span className="text-[#16A34A]">tahmin yap.</span>
+            <h1 className="font-display text-[44px] sm:text-[58px] font-bold text-[var(--ink)] leading-[1.05] tracking-tight mb-5">
+              Olacak mı,<br />olmayacak mı?
             </h1>
-            <p className="text-lg text-[#6B7280] leading-relaxed mb-8">
-              Kalshi ve Polymarket&apos;ın ücretsiz simülasyon alternatifi.
-              Sanal kredilerinle tahmin piyasasını öğren, toplulukla yarış.
+            <p className="text-lg text-[var(--ink-2)] leading-relaxed mb-8 max-w-xl">
+              Faizden Süper Lig&apos;e, seçimden Bitcoin&apos;e — gerçek hayat sorularına
+              EVET ya da HAYIR de. Gerçek para yok; ◈1.000 sanal krediyle başla,
+              tahmin gücünle sıralamada yüksel.
             </p>
             <div className="flex gap-3 flex-wrap">
-              <Link href="/register" className="bg-[#16A34A] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#15803D] transition-colors text-sm">
-                Başla — ◈1,000 Kredi Ücretsiz
+              <Link href="/register" className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
+                Tahmin etmeye başla
               </Link>
-              <Link href="/login" className="border border-[#E5E7EB] text-[#374151] font-semibold px-6 py-3 rounded-xl hover:bg-[#F9FAFB] transition-colors text-sm">
-                Giriş Yap
+              <Link href="/markets" className="border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] font-semibold px-6 py-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
+                Marketlere göz at
               </Link>
             </div>
           </div>
 
           {/* Stats bar */}
-          <div className="flex gap-8 py-6 border-y border-[#F3F4F6] mb-12">
+          <div className="flex gap-10 py-6 border-y border-[var(--border-light)] mb-12 flex-wrap">
             {[
               { val: '10K+', label: 'Aktif tahmin' },
               { val: '◈4.8M', label: 'İşlem hacmi' },
@@ -129,34 +132,39 @@ export default async function LandingPage() {
               { val: '7', label: 'Kategori' },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-xl font-bold text-[#111827]">{s.val}</div>
-                <div className="text-xs text-[#9CA3AF] mt-0.5">{s.label}</div>
+                <div className="font-data text-xl font-semibold text-[var(--ink)]">{s.val}</div>
+                <div className="text-xs text-[var(--ink-3)] mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Live markets preview */}
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-[#111827]">Aktif Marketler</h2>
-            <Link href="/register" className="text-sm font-medium text-[#16A34A] hover:underline">
+            <h2 className="font-display text-xl font-bold text-[var(--ink)]">Aktif Marketler</h2>
+            <Link href="/markets" className="text-sm font-medium text-[var(--rise)] hover:underline">
               Tümünü gör →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {DEMO_MARKETS.map((market) => (
-              <MarketCard key={market.id} market={market} href="/register" />
+              <MarketCard key={market.id} market={market} href="/markets" />
             ))}
           </div>
 
-          {/* CTA */}
-          <div className="mt-12 bg-[#F0FDF4] border border-[#BBF7D0] rounded-2xl p-8 text-center">
-            <h3 className="text-xl font-bold text-[#111827] mb-2">Tahmin yapmaya hazır mısın?</h3>
-            <p className="text-sm text-[#6B7280] mb-5">Ücretsiz kayıt ol, ◈1,000 kredi kazan, anında başla.</p>
-            <Link href="/register" className="inline-block bg-[#16A34A] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#15803D] transition-colors text-sm">
+          {/* CTA — tabela paneli */}
+          <div className="mt-14 tabela rounded-2xl px-8 py-10 text-center">
+            <h3 className="font-display text-2xl font-bold text-white mb-2">Var mısın?</h3>
+            <p className="text-sm text-[var(--board-text)] mb-6">
+              Kayıt ol, ◈1.000 kredin hazır. Kredi kartı yok, gerçek para yok — hiçbir zaman.
+            </p>
+            <Link href="/register" className="inline-block bg-[var(--rise)] text-white font-semibold px-8 py-3 rounded-xl hover:brightness-110 transition-all text-sm [font-family:var(--font-body)]">
               Ücretsiz Hesap Aç
             </Link>
-            <p className="text-xs text-[#9CA3AF] mt-3">Gerçek para içermez. Hiçbir zaman.</p>
           </div>
+
+          <p className="text-center text-xs text-[var(--ink-3)] py-8">
+            AçıkBazaar bir simülasyondur. Gerçek para içermez, bahis hizmeti değildir.
+          </p>
         </section>
       </div>
     </LangProvider>

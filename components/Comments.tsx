@@ -54,8 +54,8 @@ export function Comments({ marketId, userId, initialComments }: Props) {
   }
 
   return (
-    <div className="bg-white dark:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#334155] rounded-2xl p-6 flex flex-col gap-4 transition-colors duration-200">
-      <h2 className="text-base font-bold text-[#111827] dark:text-[#F1F5F9]">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 flex flex-col gap-4 transition-colors duration-200">
+      <h2 className="text-base font-bold text-[var(--ink)]">
         💬 {t('Yorumlar', 'Comments')} ({initialComments.length})
       </h2>
 
@@ -67,24 +67,24 @@ export function Comments({ marketId, userId, initialComments }: Props) {
             onChange={(e) => setContent(e.target.value.slice(0, 1000))}
             placeholder={t('Bu market hakkında ne düşünüyorsun?', 'What do you think about this market?')}
             rows={2}
-            className="w-full bg-white dark:bg-[#0F172A] border border-[#E5E7EB] dark:border-[#334155] rounded-xl px-3 py-2.5 text-sm text-[#111827] dark:text-[#F1F5F9] placeholder:text-[#9CA3AF] dark:placeholder:text-[#64748B] outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/10 transition-all resize-none"
+            className="w-full bg-[var(--paper)] border border-[var(--border)] rounded-xl px-3 py-2.5 text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] outline-none focus:border-[var(--rise)] focus:ring-2 focus:ring-[var(--rise)]/10 transition-all resize-none"
           />
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-[#9CA3AF] dark:text-[#64748B]">{content.length}/1000</span>
+            <span className="text-[11px] text-[var(--ink-3)]">{content.length}/1000</span>
             <button
               onClick={handlePost}
               disabled={posting || !content.trim()}
-              className="bg-[#16A34A] text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-[#15803D] disabled:opacity-50 transition-colors"
+              className="bg-[var(--rise)] text-white text-sm font-semibold px-5 py-2 rounded-lg hover:brightness-110 disabled:opacity-50 transition-colors"
             >
               {posting ? t('Gönderiliyor...', 'Posting...') : t('Yorum Yap', 'Post')}
             </button>
           </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs text-[var(--fall)]">{error}</p>}
         </div>
       ) : (
-        <div className="bg-[#F9FAFB] dark:bg-[#0F172A] border border-[#F3F4F6] dark:border-[#334155] rounded-xl p-4 text-center text-sm text-[#6B7280] dark:text-[#94A3B8]">
+        <div className="bg-[var(--surface-2)] border border-[var(--border-light)] rounded-xl p-4 text-center text-sm text-[var(--ink-2)]">
           {t('Yorum yapmak için ', 'To comment, ')}
-          <Link href="/login" className="text-[#16A34A] font-semibold hover:underline">
+          <Link href="/login" className="text-[var(--rise)] font-semibold hover:underline">
             {t('giriş yap', 'log in')}
           </Link>
         </div>
@@ -92,25 +92,25 @@ export function Comments({ marketId, userId, initialComments }: Props) {
 
       {/* List */}
       {initialComments.length === 0 ? (
-        <p className="text-sm text-[#9CA3AF] dark:text-[#64748B] text-center py-4">
+        <p className="text-sm text-[var(--ink-3)] text-center py-4">
           {t('İlk yorumu sen yaz!', 'Be the first to comment!')}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
           {initialComments.map((c) => (
-            <div key={c.id} className="border-t border-[#F3F4F6] dark:border-[#334155] pt-3 first:border-0 first:pt-0">
+            <div key={c.id} className="border-t border-[var(--border-light)] pt-3 first:border-0 first:pt-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-semibold text-[#111827] dark:text-[#F1F5F9]">
+                <span className="text-sm font-semibold text-[var(--ink)]">
                   @{c.profiles?.username ?? 'anonim'}
                 </span>
                 {c.profiles?.is_bot && (
-                  <span className="text-[9px] font-bold uppercase bg-[#EFF6FF] dark:bg-blue-950/50 text-[#3B82F6] dark:text-blue-400 border border-[#BFDBFE] dark:border-blue-800 px-1.5 py-0.5 rounded">
+                  <span className="text-[9px] font-bold uppercase bg-[var(--rise-soft)] text-[var(--rise)] border border-[var(--rise-line)] px-1.5 py-0.5 rounded">
                     BOT
                   </span>
                 )}
-                <span className="text-[11px] text-[#9CA3AF] dark:text-[#64748B]">{timeAgo(c.created_at, lang)}</span>
+                <span className="text-[11px] text-[var(--ink-3)]">{timeAgo(c.created_at, lang)}</span>
               </div>
-              <p className="text-sm text-[#374151] dark:text-[#CBD5E1] leading-relaxed whitespace-pre-wrap">{c.content}</p>
+              <p className="text-sm text-[var(--ink-2)] leading-relaxed whitespace-pre-wrap">{c.content}</p>
             </div>
           ))}
         </div>

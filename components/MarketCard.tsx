@@ -23,54 +23,59 @@ export function MarketCard({ market, href }: MarketCardProps) {
 
   return (
     <Link href={link}>
-      <div className="market-card bg-white dark:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#334155] rounded-xl p-5 flex flex-col gap-4 cursor-pointer h-full transition-colors duration-200">
-        {/* Top row */}
-        <div className="flex items-center justify-between gap-2">
+      <div className="market-card bg-[var(--surface)] border border-[var(--border)] rounded-2xl flex flex-col cursor-pointer h-full overflow-hidden">
+        {/* Üst: kategori, etiket, kalan süre */}
+        <div className="flex items-center justify-between gap-2 px-5 pt-4">
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge color={catColor}>{categoryLabel(market.category, lang)}</Badge>
             {market.tag && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wide bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
                 {market.tag}
               </span>
             )}
           </div>
-          <span className={`text-xs font-medium shrink-0 ${days <= 7 ? 'text-red-500 dark:text-red-400' : 'text-[#9CA3AF] dark:text-[#64748B]'}`}>
-            {days}g kaldı
+          <span className={`font-data text-[11px] shrink-0 ${days <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
+            {days}{t('g', 'd')}
           </span>
         </div>
 
-        {/* Title */}
-        <p className="text-[15px] font-semibold text-[#111827] dark:text-[#F1F5F9] leading-snug line-clamp-2 flex-1">
-          {title}
-        </p>
-
-        {/* Big probability */}
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="text-2xl font-bold text-[#16A34A]">{yesPct}%</div>
-            <div className="text-xs text-[#6B7280] dark:text-[#94A3B8] mt-0.5">{t('EVET ihtimali', 'YES chance')}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-semibold text-[#6B7280] dark:text-[#94A3B8]">{100 - yesPct}%</div>
-            <div className="text-xs text-[#9CA3AF] dark:text-[#64748B]">{t('HAYIR', 'NO')}</div>
+        {/* Başlık + olasılık */}
+        <div className="flex items-start justify-between gap-3 px-5 pt-3 pb-4 flex-1">
+          <p className="text-[15px] font-semibold text-[var(--ink)] leading-snug line-clamp-3">
+            {title}
+          </p>
+          <div className="text-right shrink-0">
+            <div className="font-data text-[26px] font-semibold leading-none text-[var(--rise)]">
+              {yesPct}<span className="text-[15px]">%</span>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-[var(--ink-3)] mt-1">
+              {t('evet', 'yes')}
+            </div>
           </div>
         </div>
 
         {/* Prob bar */}
-        <div className="prob-bar">
-          <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+        <div className="px-5 pb-4">
+          <div className="prob-bar">
+            <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+          </div>
+          <div className="flex items-center justify-between mt-2 text-[11px] text-[var(--ink-3)]">
+            <span className="font-data">◈{formatCredits(market.total_volume)}</span>
+            <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
+          </div>
         </div>
 
-        {/* Odds row */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[#16A34A] font-semibold">{yesOdds}x {t('EVET', 'YES')}</span>
-          <span className="text-red-500 dark:text-red-400 font-semibold">{noOdds}x {t('HAYIR', 'NO')}</span>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-[#9CA3AF] dark:text-[#64748B] pt-2 border-t border-[#F3F4F6] dark:border-[#334155]">
-          <span>◈{formatCredits(market.total_volume)} {t('hacim', 'volume')}</span>
-          <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
+        {/* İmza: tabela şeridi — EVET/HAYIR kotasyonu */}
+        <div className="tabela px-5 py-2.5 flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="tabela-label">{t('evet', 'yes')}</span>
+            <span className="tabela-rise text-sm font-medium">{yesOdds.toFixed(2)}</span>
+          </div>
+          <div className="tabela-divider w-px h-4" />
+          <div className="flex items-baseline gap-2">
+            <span className="tabela-label">{t('hayır', 'no')}</span>
+            <span className="tabela-fall text-sm font-medium">{noOdds.toFixed(2)}</span>
+          </div>
         </div>
       </div>
     </Link>

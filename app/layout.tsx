@@ -1,17 +1,29 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Bricolage_Grotesque, Figtree, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { LangProvider } from '@/contexts/LangContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const display = Bricolage_Grotesque({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-display',
+});
+const body = Figtree({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-body',
+});
+const mono = IBM_Plex_Mono({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500', '600'],
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
-  title: 'AçıkBazaar — Açıkça tahmin et. Özgürce oyna.',
-  description: 'Kalshi ve Polymarket\'ın tamamen ücretsiz simülasyon alternatifi. Gerçek para yok, gerçek hayat eventleri var.',
+  title: 'AçıkBazaar — Olacak mı, olmayacak mı?',
+  description: 'Türkiye\'nin ücretsiz tahmin pazarı. Gerçek para yok, gerçek hayat eventleri var. Sanal kredinle tahmin et, toplulukla yarış.',
   openGraph: {
     title: 'AçıkBazaar',
-    description: 'Predict openly. Play freely.',
+    description: 'Olacak mı, olmayacak mı? Türkiye\'nin ücretsiz tahmin pazarı.',
     url: 'https://acikbazaar.com',
     siteName: 'AçıkBazaar',
     locale: 'tr_TR',
@@ -21,7 +33,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" className={inter.variable} suppressHydrationWarning>
+    <html lang="tr" className={`${display.variable} ${body.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         {/* Prevent dark mode flash on page load */}
         <script dangerouslySetInnerHTML={{

@@ -58,12 +58,12 @@ export function Header({ balance, username }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E5E7EB] dark:border-[#334155] bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-sm transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-6">
+    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm transition-colors duration-200">
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2 sm:gap-6">
         {/* Logo */}
         <Link href="/markets" className="flex items-center gap-2 shrink-0">
-          <span className="text-[#16A34A] font-bold text-lg leading-none">◈</span>
-          <span className="text-sm font-bold text-[#111827] dark:text-[#F1F5F9] tracking-tight">AçıkBazaar</span>
+          <span className="text-[var(--rise)] font-bold text-lg leading-none">◈</span>
+          <span className="font-display text-[15px] font-bold text-[var(--ink)] tracking-tight">AçıkBazaar</span>
         </Link>
 
         {/* Nav */}
@@ -75,8 +75,8 @@ export function Header({ balance, username }: HeaderProps) {
               className={cn(
                 'px-3 py-1.5 text-sm rounded-lg transition-colors font-medium',
                 pathname.startsWith(link.href)
-                  ? 'text-[#16A34A] bg-[#F0FDF4] dark:bg-[#14532D]/40'
-                  : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F1F5F9] hover:bg-[#F9FAFB] dark:hover:bg-[#1E293B]'
+                  ? 'text-[var(--rise)] bg-[var(--rise-soft)]'
+                  : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)]'
               )}
             >
               {link.label}
@@ -86,11 +86,11 @@ export function Header({ balance, username }: HeaderProps) {
 
         <div className="flex-1" />
 
-        {/* Balance */}
+        {/* Bakiye — mini tabela */}
         {balance !== undefined && (
-          <div className="hidden sm:flex items-center gap-1.5 bg-[#F0FDF4] dark:bg-[#14532D]/40 border border-[#BBF7D0] dark:border-[#166534] rounded-lg px-3 py-1.5">
-            <span className="text-[#16A34A] text-xs font-bold">◈</span>
-            <span className="text-sm font-semibold text-[#15803D] dark:text-[#4ADE80]">{formatCredits(balance)}</span>
+          <div className="hidden sm:flex items-center gap-1.5 tabela rounded-lg px-3 py-1.5">
+            <span className="tabela-rise text-xs">◈</span>
+            <span className="tabela-rise text-sm font-medium">{formatCredits(balance)}</span>
           </div>
         )}
 
@@ -98,7 +98,7 @@ export function Header({ balance, username }: HeaderProps) {
         <button
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Aydınlık mod' : 'Karanlık mod'}
-          className="p-2 rounded-lg border border-[#E5E7EB] dark:border-[#334155] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F1F5F9] hover:bg-[#F9FAFB] dark:hover:bg-[#1E293B] transition-colors"
+          className="p-2 rounded-lg border border-[var(--border)] text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)] transition-colors"
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
@@ -106,7 +106,7 @@ export function Header({ balance, username }: HeaderProps) {
         {/* Lang toggle */}
         <button
           onClick={toggleLang}
-          className="text-xs font-semibold text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F1F5F9] transition-colors px-2.5 py-1.5 rounded-lg border border-[#E5E7EB] dark:border-[#334155] hover:bg-[#F9FAFB] dark:hover:bg-[#1E293B]"
+          className="text-xs font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-2.5 py-1.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-2)]"
         >
           {lang === 'tr' ? 'EN' : 'TR'}
         </button>
@@ -114,7 +114,7 @@ export function Header({ balance, username }: HeaderProps) {
         {/* Auth */}
         {username ? (
           <div className="flex items-center gap-2">
-            <Link href="/profile" className="text-sm font-medium text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F1F5F9] transition-colors">
+            <Link href="/profile" className="text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors">
               @{username}
             </Link>
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
@@ -123,18 +123,18 @@ export function Header({ balance, username }: HeaderProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Link href="/login">
+            <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" size="sm">{t('Giriş', 'Log in')}</Button>
             </Link>
             <Link href="/register">
-              <Button size="sm">{t('Kayıt Ol', 'Sign up')}</Button>
+              <Button size="sm" className="whitespace-nowrap">{t('Kayıt Ol', 'Sign up')}</Button>
             </Link>
           </div>
         )}
       </div>
 
       {/* Mobile nav */}
-      <div className="md:hidden border-t border-[#F3F4F6] dark:border-[#1E293B] flex">
+      <div className="md:hidden border-t border-[var(--border-light)] flex">
         {navLinks.map((link) => (
           <Link
             key={link.href}
@@ -142,8 +142,8 @@ export function Header({ balance, username }: HeaderProps) {
             className={cn(
               'flex-1 text-center py-2 text-xs font-medium transition-colors',
               pathname.startsWith(link.href)
-                ? 'text-[#16A34A] border-b-2 border-[#16A34A]'
-                : 'text-[#9CA3AF] dark:text-[#64748B]'
+                ? 'text-[var(--rise)] border-b-2 border-[var(--rise)]'
+                : 'text-[var(--ink-3)]'
             )}
           >
             {link.label}

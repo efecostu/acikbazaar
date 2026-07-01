@@ -33,13 +33,13 @@ export function MarketsClient({ markets }: Props) {
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#111827] dark:text-[#F1F5F9]">{t('Aktif Marketler', 'Active Markets')}</h1>
-        <p className="text-sm text-[#6B7280] dark:text-[#94A3B8] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
+        <h1 className="font-display text-[26px] font-bold text-[var(--ink)]">{t('Aktif Marketler', 'Active Markets')}</h1>
+        <p className="text-sm text-[var(--ink-2)] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] dark:text-[#64748B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-3)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -47,7 +47,7 @@ export function MarketsClient({ markets }: Props) {
           placeholder={t('Market ara...', 'Search markets...')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#334155] rounded-xl text-sm text-[#111827] dark:text-[#F1F5F9] placeholder:text-[#9CA3AF] dark:placeholder:text-[#64748B] outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/10 transition-all"
+          className="w-full pl-9 pr-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-sm text-[var(--ink)] placeholder:text-[var(--ink-3)] outline-none focus:border-[var(--rise)] focus:ring-2 focus:ring-[var(--rise)]/10 transition-all"
         />
       </div>
 
@@ -58,8 +58,8 @@ export function MarketsClient({ markets }: Props) {
             <button key={cat} onClick={() => setCategory(cat)}
               className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
                 category === cat
-                  ? 'border-[#16A34A] text-[#16A34A] bg-[#F0FDF4] dark:bg-[#14532D]/40'
-                  : 'border-[#E5E7EB] dark:border-[#334155] text-[#6B7280] dark:text-[#94A3B8] hover:border-[#D1D5DB] dark:hover:border-[#475569] bg-white dark:bg-[#1E293B]'
+                  ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
+                  : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
               {cat === 'all' ? t('Tümü', 'All') : categoryLabel(cat, lang)}
             </button>
@@ -70,8 +70,8 @@ export function MarketsClient({ markets }: Props) {
             <button key={reg} onClick={() => setRegion(reg)}
               className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
                 region === reg
-                  ? 'border-[#16A34A] text-[#16A34A] bg-[#F0FDF4] dark:bg-[#14532D]/40'
-                  : 'border-[#E5E7EB] dark:border-[#334155] text-[#6B7280] dark:text-[#94A3B8] hover:border-[#D1D5DB] dark:hover:border-[#475569] bg-white dark:bg-[#1E293B]'
+                  ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
+                  : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
               {reg === 'all' ? t('Tümü', 'All') : reg === 'turkey' ? '🇹🇷 TR' : '🌐 Global'}
             </button>
@@ -81,8 +81,8 @@ export function MarketsClient({ markets }: Props) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-20 text-[#9CA3AF] dark:text-[#64748B] text-sm">
-          {t('Market bulunamadı.', 'No markets found.')}
+        <div className="text-center py-20 text-[var(--ink-3)] text-sm">
+          {t('Market bulunamadı. Filtreleri sıfırlamayı dene.', 'No markets found. Try clearing the filters.')}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -92,7 +92,7 @@ export function MarketsClient({ markets }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-[#9CA3AF] dark:text-[#64748B] text-center">
+      <p className="font-data text-xs text-[var(--ink-3)] text-center">
         {filtered.length} / {markets.length} {t('market', 'markets')}
       </p>
     </div>
