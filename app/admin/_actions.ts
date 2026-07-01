@@ -21,7 +21,9 @@ export async function updateMarket(marketId: string, data: {
 export async function resolveMarket(marketId: string, outcome: boolean) {
   const supabase = await createAdminClient();
 
-  await supabase.from('markets').update({ status: 'resolved', outcome }).eq('id', marketId);
+  await supabase.from('markets').update({
+    status: 'resolved', outcome, resolved_at: new Date().toISOString(),
+  }).eq('id', marketId);
 
   const { data: bets } = await supabase
     .from('bets')
@@ -31,11 +33,12 @@ export async function resolveMarket(marketId: string, outcome: boolean) {
 
   for (const bet of bets ?? []) {
     const won = (bet.side === 'yes' && outcome) || (bet.side === 'no' && !outcome);
+    const settled_at = new Date().toISOString();
     if (won) {
-      await supabase.from('bets').update({ status: 'won' }).eq('id', bet.id);
+      await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
       await supabase.rpc('credit_and_update_user', { p_user_id: bet.user_id, p_amount: bet.potential_payout });
     } else {
-      await supabase.from('bets').update({ status: 'lost' }).eq('id', bet.id);
+      await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
     }
   }
 

@@ -94,6 +94,7 @@ Rules:
       await supabase.from('markets').update({
         status: 'resolved',
         outcome: verdict.outcome,
+        resolved_at: new Date().toISOString(),
       }).eq('id', market.id);
 
       // Fetch all pending bets on this market
@@ -111,8 +112,9 @@ Rules:
           (bet.side === 'yes' && verdict.outcome === true) ||
           (bet.side === 'no'  && verdict.outcome === false);
 
+        const settled_at = new Date().toISOString();
         if (won) {
-          await supabase.from('bets').update({ status: 'won' }).eq('id', bet.id);
+          await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
           // Credit winnings to user balance
           await supabase.rpc('credit_and_update_user', {
             p_user_id: bet.user_id,
@@ -120,7 +122,7 @@ Rules:
           });
           winners++;
         } else {
-          await supabase.from('bets').update({ status: 'lost' }).eq('id', bet.id);
+          await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
           losers++;
         }
       }

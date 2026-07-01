@@ -36,18 +36,30 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
   const activeSideOdds = selectedSide === 'yes' ? yesOdds : noOdds;
   const potentialPayout = selectedSide ? calculatePayout(amount, activeSideProb) : 0;
 
+  const BET_ERRORS: Record<string, [string, string]> = {
+    insufficient_balance: ['Yetersiz bakiye.', 'Insufficient balance.'],
+    market_closed: ['Market kapandı, bahis alınamıyor.', 'Market is closed.'],
+    market_not_found: ['Market bulunamadı.', 'Market not found.'],
+    invalid_amount: ['Geçersiz miktar.', 'Invalid amount.'],
+    auth_required: ['Giriş yapmalısın.', 'You must be logged in.'],
+  };
+
   async function handlePlaceBet() {
     if (!selectedSide) return;
     if (amount <= 0 || amount > balance) { setError(t('Geçersiz miktar.', 'Invalid amount.')); return; }
     setLoading(true); setError(''); setSuccess('');
     const supabase = createClient();
-    const { error: betError } = await supabase.from('bets').insert({
-      user_id: userId, market_id: market.id, side: selectedSide,
-      amount, odds_at_bet: activeSideOdds, potential_payout: potentialPayout, status: 'pending',
+    // Atomik server-side bahis: doğrulama + bakiye + havuz güncellemesi tek transaction
+    const { data, error: betError } = await supabase.rpc('place_bet', {
+      p_market_id: market.id, p_side: selectedSide, p_amount: amount,
     });
-    if (betError) { setError(betError.message); setLoading(false); return; }
-    await supabase.from('profiles').update({ balance: balance - amount }).eq('id', userId);
-    setBalance((b) => b - amount);
+    if (betError) {
+      const known = Object.keys(BET_ERRORS).find((k) => betError.message.includes(k));
+      setError(known ? t(...BET_ERRORS[known]) : betError.message);
+      setLoading(false);
+      return;
+    }
+    setBalance(data?.new_balance ?? balance - amount);
     setSuccess(t(`◈${amount} kredi — ${selectedSide.toUpperCase()} tarafına bahis yapıldı!`, `Bet placed: ◈${amount} on ${selectedSide.toUpperCase()}!`));
     setLoading(false);
     router.refresh();

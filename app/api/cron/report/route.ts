@@ -4,7 +4,6 @@ import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const REPORT_EMAILS = ['efecostu01@gmail.com', 'eminaliozturk@gmail.com'];
 
 export async function GET() {
@@ -33,7 +32,7 @@ export async function GET() {
     { data: topWinners },
     { data: platformStats },
   ] = await Promise.all([
-    supabase.from('markets').select('title_en, outcome, ends_at').eq('status', 'resolved').gte('updated_at', since),
+    supabase.from('markets').select('title_en, outcome, ends_at').eq('status', 'resolved').gte('resolved_at', since),
     supabase.from('markets').select('title_en, category, yes_prob, total_volume').eq('status', 'active').gte('created_at', since),
     supabase.from('bets').select('amount, side, status').gte('created_at', since),
     supabase.from('profiles').select('username').gte('created_at', since),
@@ -191,8 +190,9 @@ export async function GET() {
 </html>
   `.trim();
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { error } = await resend.emails.send({
-    from: 'AçıkBazaar <onboarding@resend.dev>',
+    from: 'AçıkBazaar <rapor@acikbazaar.com>',
     to: REPORT_EMAILS,
     subject: `◈ AçıkBazaar Günlük Rapor — ${today}`,
     html,
