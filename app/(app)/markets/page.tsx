@@ -156,6 +156,17 @@ const DEMO_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL
 export default async function MarketsPage() {
   if (DEMO_MODE) return <MarketsClient markets={DEMO_MARKETS} />;
 
+  // Trafik bazlı bot aktivitesi: yanıt gönderildikten sonra tick'i dürt.
+  // Endpoint kendi içinde throttle'lı (90 dk) — her sayfa yüklemesi bahis üretmez.
+  const { after } = await import('next/server');
+  after(async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bots/tick`, {
+        headers: { 'x-admin-secret': process.env.ADMIN_SECRET ?? '' },
+      });
+    } catch { /* bot aktivitesi kritik değil */ }
+  });
+
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
   const { data: markets } = await supabase

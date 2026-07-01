@@ -113,8 +113,28 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       {/* AI Favorites */}
       <AIFavorites favorites={getAIFavorites(market.id, yesProb)} />
 
+      {/* Anonim kullanıcı: bahis için giriş CTA */}
+      {market.status === 'active' && !userId && (
+        <div className="bg-white dark:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#334155] rounded-2xl p-6 text-center flex flex-col gap-3 transition-colors duration-200">
+          <h2 className="text-base font-bold text-[#111827] dark:text-[#F1F5F9]">
+            {t('Bu markete bahis yapmak ister misin?', 'Want to bet on this market?')}
+          </h2>
+          <p className="text-sm text-[#6B7280] dark:text-[#94A3B8]">
+            {t('Ücretsiz kayıt ol, ◈1.000 kredi kazan, hemen tahmin yap.', 'Sign up free, get ◈1,000 credits, start predicting.')}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <a href="/register" className="bg-[#16A34A] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-[#15803D] transition-colors">
+              {t('Ücretsiz Başla', 'Start Free')}
+            </a>
+            <a href="/login" className="border border-[#E5E7EB] dark:border-[#334155] text-[#374151] dark:text-[#CBD5E1] text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-[#F9FAFB] dark:hover:bg-[#0F172A] transition-colors">
+              {t('Giriş Yap', 'Log in')}
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Bet panel */}
-      {market.status === 'active' && (
+      {market.status === 'active' && !!userId && (
         <div className="bg-white dark:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#334155] rounded-2xl p-6 flex flex-col gap-5 transition-colors duration-200">
           <h2 className="text-base font-bold text-[#111827] dark:text-[#F1F5F9]">{t('Bahis Yap', 'Place Bet')}</h2>
 

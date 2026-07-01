@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-
 export const dynamic = 'force-dynamic';
 import { Header } from '@/components/Header';
 
@@ -20,7 +18,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect('/login');
+  // Marketler public — giriş yapmamış kullanıcı gezinebilir, bahis için login gerekir
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F9FAFB] dark:bg-[#0F172A]">
+        <Header />
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">{children}</main>
+      </div>
+    );
+  }
 
   let { data: profile } = await supabase
     .from('profiles')
