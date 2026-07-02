@@ -12,6 +12,8 @@ interface MarketCardProps {
   href?: string;
 }
 
+const OPTION_COLORS = ['#2FD588', '#5B9BFF', '#F5B23D', '#FF7A70'];
+
 export function MarketCard({ market, href }: MarketCardProps) {
   const { lang, t } = useLang();
   const { yesProb, yesOdds, noOdds } = calculateOdds(market.yes_pool, market.no_pool);
@@ -20,6 +22,13 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const catColor = categoryColor(market.category);
   const link = href ?? `/markets/${market.id}`;
+
+  const options = market.market_options ?? [];
+  const isMulti = market.kind === 'multi' && options.length > 0;
+  const optTotal = options.reduce((s, o) => s + o.pool, 0);
+  const topOptions = [...options].sort((a, b) => b.pool - a.pool).slice(0, 2);
+  const optPct = (pool: number) => Math.round((pool / Math.max(optTotal, 1)) * 100);
+  const leader = topOptions[0];
 
   return (
     <Link href={link}>
@@ -45,38 +54,69 @@ export function MarketCard({ market, href }: MarketCardProps) {
             {title}
           </p>
           <div className="text-right shrink-0">
-            <div className="font-data text-[26px] font-semibold leading-none text-[var(--rise)]">
-              {yesPct}<span className="text-[15px]">%</span>
+            <div className="font-data text-[26px] font-semibold leading-none" style={{ color: isMulti ? OPTION_COLORS[0] : 'var(--rise)' }}>
+              {isMulti ? optPct(leader?.pool ?? 0) : yesPct}<span className="text-[15px]">%</span>
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-[var(--ink-3)] mt-1">
-              {t('evet', 'yes')}
+            <div className="text-[10px] uppercase tracking-wider text-[var(--ink-3)] mt-1 max-w-[90px] truncate">
+              {isMulti
+                ? (lang === 'tr' ? leader?.label_tr : leader?.label_en)
+                : t('evet', 'yes')}
             </div>
           </div>
         </div>
 
         {/* Prob bar */}
         <div className="px-5 pb-4">
-          <div className="prob-bar">
-            <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
-          </div>
+          {isMulti ? (
+            <div className="flex h-[5px] rounded-full overflow-hidden bg-[var(--surface-2)]">
+              {[...options].sort((a, b) => b.pool - a.pool).map((o, i) => (
+                <div key={o.id} style={{
+                  width: `${optPct(o.pool)}%`,
+                  background: OPTION_COLORS[i % OPTION_COLORS.length],
+                }} />
+              ))}
+            </div>
+          ) : (
+            <div className="prob-bar">
+              <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
+            </div>
+          )}
           <div className="flex items-center justify-between mt-2 text-[11px] text-[var(--ink-3)]">
             <span className="font-data">◈{formatCredits(market.total_volume)}</span>
             <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
           </div>
         </div>
 
-        {/* İmza: tabela şeridi — EVET/HAYIR kotasyonu */}
-        <div className="tabela px-5 py-2.5 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="tabela-label">{t('evet', 'yes')}</span>
-            <span className="tabela-rise text-sm font-medium">{yesOdds.toFixed(2)}</span>
+        {/* İmza: tabela şeridi */}
+        {isMulti ? (
+          <div className="tabela px-5 py-2.5 flex items-center justify-between gap-3">
+            {topOptions.map((o, i) => (
+              <div key={o.id} className="flex items-baseline gap-2 min-w-0">
+                <span className="tabela-label truncate max-w-[110px]">
+                  {lang === 'tr' ? o.label_tr : o.label_en}
+                </span>
+                <span className="text-sm font-medium shrink-0" style={{ color: OPTION_COLORS[i] }}>
+                  {optPct(o.pool)}%
+                </span>
+              </div>
+            ))}
+            {options.length > 2 && (
+              <span className="tabela-label shrink-0">+{options.length - 2}</span>
+            )}
           </div>
-          <div className="tabela-divider w-px h-4" />
-          <div className="flex items-baseline gap-2">
-            <span className="tabela-label">{t('hayır', 'no')}</span>
-            <span className="tabela-fall text-sm font-medium">{noOdds.toFixed(2)}</span>
+        ) : (
+          <div className="tabela px-5 py-2.5 flex items-center justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="tabela-label">{t('evet', 'yes')}</span>
+              <span className="tabela-rise text-sm font-medium">{yesOdds.toFixed(2)}</span>
+            </div>
+            <div className="tabela-divider w-px h-4" />
+            <div className="flex items-baseline gap-2">
+              <span className="tabela-label">{t('hayır', 'no')}</span>
+              <span className="tabela-fall text-sm font-medium">{noOdds.toFixed(2)}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Link>
   );

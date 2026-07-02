@@ -78,7 +78,7 @@ export function PortfolioClient({ bets }: Props) {
                     <p className="text-xs text-[#9CA3AF] dark:text-[#64748B] mt-0.5">{formatDate(bet.created_at, lang)}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 text-sm">
-                    <span className={`font-bold ${bet.side === 'yes' ? 'text-[#16A34A]' : 'text-red-500 dark:text-red-400'}`}>{bet.side.toUpperCase()}</span>
+                    <span className={`font-bold ${bet.side !== 'no' ? 'text-[#16A34A]' : 'text-red-500 dark:text-red-400'}`}>{bet.side ? bet.side.toUpperCase() : 'SEÇENEK'}</span>
                     <span className="text-[#6B7280] dark:text-[#94A3B8]">◈{formatCredits(bet.amount)}</span>
                     <span className="text-[#9CA3AF] dark:text-[#64748B]">{bet.odds_at_bet}x</span>
                     <span className="text-[#9CA3AF] dark:text-[#64748B]">→ ◈{formatCredits(bet.potential_payout)}</span>

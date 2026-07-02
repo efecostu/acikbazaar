@@ -11,16 +11,22 @@ import { cn } from '@/lib/utils';
 const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 const REGIONS: (MarketRegion | 'all')[] = ['all', 'turkey', 'global'];
 
-interface Props { markets: Market[] }
+interface Props {
+  markets: Market[];
+  interests?: string[] | null;
+}
 
-export function MarketsClient({ markets }: Props) {
+export function MarketsClient({ markets, interests = null }: Props) {
   const { lang, t } = useLang();
-  const [category, setCategory] = useState<MarketCategory | 'all'>('all');
+  const hasInterests = !!interests && interests.length > 0 && interests.length < 7;
+  const [category, setCategory] = useState<MarketCategory | 'all' | 'foryou'>(hasInterests ? 'foryou' : 'all');
   const [region, setRegion] = useState<MarketRegion | 'all'>('all');
   const [search, setSearch] = useState('');
 
   const filtered = markets.filter((m) => {
-    if (category !== 'all' && m.category !== category) return false;
+    if (category === 'foryou') {
+      if (!interests?.includes(m.category)) return false;
+    } else if (category !== 'all' && m.category !== category) return false;
     if (region !== 'all' && m.region !== region) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -63,6 +69,16 @@ export function MarketsClient({ markets }: Props) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex gap-1.5 flex-wrap">
+          {hasInterests && (
+            <button onClick={() => setCategory('foryou')}
+              className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
+                category === 'foryou'
+                  ? 'border-[var(--copper)] text-[var(--copper)] bg-[var(--copper-soft)]'
+                  : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
+              )}>
+              ⭐ {t('Senin için', 'For you')}
+            </button>
+          )}
           {CATEGORIES.map((cat) => (
             <button key={cat} onClick={() => setCategory(cat)}
               className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',

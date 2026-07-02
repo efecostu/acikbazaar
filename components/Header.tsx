@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 interface HeaderProps {
   balance?: number;
   username?: string;
+  streak?: number;
 }
 
 function SunIcon() {
@@ -38,7 +39,7 @@ function MoonIcon() {
   );
 }
 
-export function Header({ balance, username }: HeaderProps) {
+export function Header({ balance, username, streak = 0 }: HeaderProps) {
   const { lang, toggleLang, t } = useLang();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
@@ -85,6 +86,17 @@ export function Header({ balance, username }: HeaderProps) {
         </nav>
 
         <div className="flex-1" />
+
+        {/* Streak */}
+        {streak > 0 && (
+          <div
+            className="hidden sm:flex items-center gap-1 bg-[var(--copper-soft)] border border-[var(--copper-line)] rounded-lg px-2.5 py-1.5"
+            title={t(`${streak} gündür her gün tahmin yapıyorsun`, `${streak}-day prediction streak`)}
+          >
+            <span className="text-xs">🔥</span>
+            <span className="font-data text-sm font-medium text-[var(--copper)]">{streak}</span>
+          </div>
+        )}
 
         {/* Bakiye — mini tabela */}
         {balance !== undefined && (

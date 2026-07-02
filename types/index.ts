@@ -3,6 +3,7 @@ export type MarketRegion = 'turkey' | 'global';
 export type MarketStatus = 'active' | 'closed' | 'resolved';
 export type BetSide = 'yes' | 'no';
 export type BetStatus = 'pending' | 'won' | 'lost';
+export type MarketKind = 'binary' | 'multi';
 
 export interface Profile {
   id: string;
@@ -10,7 +11,20 @@ export interface Profile {
   balance: number;
   total_bets: number;
   total_won: number;
+  streak_count?: number;
+  last_bet_date?: string | null;
+  interests?: string[] | null;
+  is_bot?: boolean;
   created_at: string;
+}
+
+export interface MarketOption {
+  id: string;
+  market_id: string;
+  label_tr: string;
+  label_en: string;
+  pool: number;
+  sort: number;
 }
 
 export interface Market {
@@ -30,6 +44,9 @@ export interface Market {
   outcome: boolean | null;
   ends_at: string;
   tag: string | null;
+  kind?: MarketKind;
+  winning_option_id?: string | null;
+  market_options?: MarketOption[];
   created_at: string;
 }
 
@@ -37,7 +54,8 @@ export interface Bet {
   id: string;
   user_id: string;
   market_id: string;
-  side: BetSide;
+  side: BetSide | null;
+  option_id?: string | null;
   amount: number;
   odds_at_bet: number;
   potential_payout: number;
@@ -49,6 +67,7 @@ export interface Bet {
 
 export interface LeaderboardEntry {
   username: string;
+  is_bot?: boolean;
   balance: number;
   total_bets: number;
   total_won: number;

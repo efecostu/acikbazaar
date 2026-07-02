@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCredits, formatDate, categoryLabel } from '@/lib/utils';
-import { updateMarket, resolveMarket, deleteMarket } from '@/app/admin/_actions';
-import type { Market } from '@/types';
+import { updateMarket, resolveMarket, resolveMarketMulti, deleteMarket } from '@/app/admin/_actions';
+import type { Market, MarketOption } from '@/types';
 
 interface BetWithUser {
   id: string;
-  side: 'yes' | 'no';
+  side: 'yes' | 'no' | null;
+  option_id?: string | null;
   amount: number;
   odds_at_bet: number;
   potential_payout: number;
@@ -20,9 +21,11 @@ interface BetWithUser {
 interface Props {
   market: Market;
   bets: BetWithUser[];
+  options?: MarketOption[];
 }
 
-export function MarketAdminClient({ market, bets }: Props) {
+export function MarketAdminClient({ market, bets, options = [] }: Props) {
+  const isMulti = market.kind === 'multi' && options.length > 0;
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -57,6 +60,16 @@ export function MarketAdminClient({ market, bets }: Props) {
     setSaving(true);
     await resolveMarket(market.id, outcome);
     setMsg(`Market ${outcome ? 'EVET ✓' : 'HAYIR ✓'} olarak kapatıldı`);
+    setSaving(false);
+    router.refresh();
+  }
+
+  async function handleResolveMulti(optionId: string, label: string) {
+    const pending = bets.filter(b => b.status === 'pending').length;
+    if (!confirm(`"${label}" kazanan seçenek olarak işaretlensin mi?\n${pending} bekleyen bahis etkilenecek.`)) return;
+    setSaving(true);
+    await resolveMarketMulti(market.id, optionId);
+    setMsg(`Kapatıldı — kazanan: ${label} ✓`);
     setSaving(false);
     router.refresh();
   }
@@ -205,6 +218,16 @@ export function MarketAdminClient({ market, bets }: Props) {
               <p className="text-xs text-[#9CA3AF] mb-4">
                 {pending.length} bekleyen bahis etkilenecek
               </p>
+              {isMulti ? (
+                <div className="flex flex-col gap-2">
+                  {options.map((o) => (
+                    <button key={o.id} onClick={() => handleResolveMulti(o.id, o.label_tr)} disabled={saving}
+                      className="py-2.5 px-3 rounded-xl border-2 border-[#E5E7EB] text-sm font-semibold text-[#374151] hover:border-[#16A34A] hover:text-[#16A34A] disabled:opacity-50 transition-colors text-left">
+                      🏆 {o.label_tr}
+                    </button>
+                  ))}
+                </div>
+              ) : (
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={() => handleResolve(true)} disabled={saving}
                   className="py-3 rounded-xl border-2 border-[#16A34A] bg-[#F0FDF4] text-[#16A34A] font-bold text-sm hover:bg-[#DCFCE7] disabled:opacity-50 transition-colors">
@@ -215,6 +238,7 @@ export function MarketAdminClient({ market, bets }: Props) {
                   ✗ HAYIR
                 </button>
               </div>
+              )}
             </div>
           )}
         </div>
@@ -252,8 +276,8 @@ export function MarketAdminClient({ market, bets }: Props) {
                       {bet.profiles?.username ?? '—'}
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`font-bold ${bet.side === 'yes' ? 'text-[#16A34A]' : 'text-red-500'}`}>
-                        {bet.side.toUpperCase()}
+                      <span className={`font-bold ${bet.side !== 'no' ? 'text-[#16A34A]' : 'text-red-500'}`}>
+                        {bet.side ? bet.side.toUpperCase() : options.find((o) => o.id === bet.option_id)?.label_tr ?? 'SEÇENEK'}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right font-medium">◈{formatCredits(bet.amount)}</td>

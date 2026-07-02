@@ -40,8 +40,8 @@ export async function GET(req: Request) {
   }
 
   const [{ data: bots }, { data: markets }] = await Promise.all([
-    supabase.from('profiles').select('id, username, balance').eq('is_bot', true),
-    supabase.from('markets').select('*').eq('status', 'active').gt('ends_at', new Date().toISOString()),
+    supabase.from('profiles').select('id, username, balance, total_bets').eq('is_bot', true),
+    supabase.from('markets').select('*').eq('status', 'active').eq('kind', 'binary').gt('ends_at', new Date().toISOString()),
   ]);
 
   if (!bots?.length || !markets?.length) {
@@ -56,7 +56,7 @@ export async function GET(req: Request) {
 
   for (const market of targets) {
     const bot = pick(bots);
-    const amount = 10 + Math.floor(Math.random() * 71); // 10-80
+    const amount = 100 + Math.floor(Math.random() * 1901); // 100-2000 (100K ekonomisine göre)
 
     // Bot bakiyesi düşükse sessizce doldur
     if (bot.balance < amount) {
@@ -76,6 +76,7 @@ export async function GET(req: Request) {
     const newYesPool = market.yes_pool + (side === 'yes' ? amount : 0);
     const newNoPool = market.no_pool + (side === 'no' ? amount : 0);
 
+    const newYesProb = newYesPool / (newYesPool + newNoPool);
     await supabase.from('bets').insert({
       user_id: bot.id, market_id: market.id, side, amount,
       odds_at_bet: odds, potential_payout: payout, status: 'pending',
@@ -83,12 +84,18 @@ export async function GET(req: Request) {
     await supabase.from('markets').update({
       yes_pool: newYesPool,
       no_pool: newNoPool,
-      yes_prob: newYesPool / (newYesPool + newNoPool),
+      yes_prob: newYesProb,
       total_volume: market.total_volume + amount,
       participant_count: market.participant_count + 1,
     }).eq('id', market.id);
-    await supabase.from('profiles').update({ balance: bot.balance - amount }).eq('id', bot.id);
+    // Grafik için olasılık noktası kaydet
+    await supabase.from('market_prob_history').insert({ market_id: market.id, yes_prob: newYesProb });
+    await supabase.from('profiles').update({
+      balance: bot.balance - amount,
+      total_bets: ((bot as { total_bets?: number }).total_bets ?? 0) + 1,
+    }).eq('id', bot.id);
     bot.balance -= amount;
+    (bot as { total_bets?: number }).total_bets = ((bot as { total_bets?: number }).total_bets ?? 0) + 1;
 
     actions.push({ bot: bot.username, market: market.title_en, side, amount });
   }

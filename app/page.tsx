@@ -75,7 +75,7 @@ export default async function LandingPage() {
     const supabase = await createClient();
     const [{ data: { user } }, { data: liveMarkets }] = await Promise.all([
       supabase.auth.getUser(),
-      supabase.from('markets').select('*').eq('status', 'active')
+      supabase.from('markets').select('*, market_options(*)').eq('status', 'active')
         .gt('ends_at', new Date().toISOString())
         .order('total_volume', { ascending: false }).limit(6),
     ]);
@@ -130,7 +130,7 @@ export default async function LandingPage() {
             </h1>
             <p className="text-lg text-[var(--ink-2)] leading-relaxed mb-8 max-w-xl">
               Faizden Süper Lig&apos;e, seçimden Bitcoin&apos;e — gerçek hayat sorularına
-              EVET ya da HAYIR de. Gerçek para yok; ◈1.000 sanal krediyle başla,
+              EVET ya da HAYIR de. Gerçek para yok; ◈100.000 sanal krediyle başla,
               tahmin gücünle sıralamada yüksel.
             </p>
             <div className="flex gap-3 flex-wrap">
@@ -179,7 +179,7 @@ export default async function LandingPage() {
             <p className="text-sm text-[var(--board-text)] mb-6">
               {loggedIn
                 ? 'Marketler seni bekliyor — tahminini koy, sıralamada yüksel.'
-                : 'Kayıt ol, ◈1.000 kredin hazır. Kredi kartı yok, gerçek para yok — hiçbir zaman.'}
+                : 'Kayıt ol, ◈100.000 kredin hazır. Kredi kartı yok, gerçek para yok — hiçbir zaman.'}
             </p>
             <Link href={loggedIn ? '/markets' : '/register'} className="inline-block bg-[var(--rise)] text-white font-semibold px-8 py-3 rounded-xl hover:brightness-110 transition-all text-sm [font-family:var(--font-body)]">
               {loggedIn ? 'Marketlere Git' : 'Ücretsiz Hesap Aç'}

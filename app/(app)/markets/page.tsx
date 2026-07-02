@@ -169,11 +169,18 @@ export default async function MarketsPage() {
 
   const { createClient } = await import('@/lib/supabase/server');
   const supabase = await createClient();
-  const { data: markets } = await supabase
-    .from('markets')
-    .select('*')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
 
-  return <MarketsClient markets={markets ?? []} />;
+  const { data: { user } } = await supabase.auth.getUser();
+  const [{ data: markets }, { data: profile }] = await Promise.all([
+    supabase
+      .from('markets')
+      .select('*, market_options(*)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false }),
+    user
+      ? supabase.from('profiles').select('interests').eq('id', user.id).single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  return <MarketsClient markets={markets ?? []} interests={profile?.interests ?? null} />;
 }

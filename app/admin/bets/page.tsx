@@ -67,8 +67,8 @@ export default async function AdminBetsPage() {
                     </Link>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`font-bold text-xs ${bet.side === 'yes' ? 'text-[#16A34A]' : 'text-red-500'}`}>
-                      {bet.side.toUpperCase()}
+                    <span className={`font-bold text-xs ${bet.side !== 'no' ? 'text-[#16A34A]' : 'text-red-500'}`}>
+                      {bet.side ? bet.side.toUpperCase() : 'SEÇENEK'}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-right font-medium">◈{formatCredits(bet.amount)}</td>

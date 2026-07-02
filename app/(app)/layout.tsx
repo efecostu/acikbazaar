@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   let { data: profile } = await supabase
     .from('profiles')
-    .select('username, balance')
+    .select('username, balance, streak_count')
     .eq('id', user.id)
     .single();
 
@@ -45,17 +45,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await admin.from('profiles').upsert({
       id: user.id,
       username,
-      balance: 1000,
+      balance: 100000,
       total_bets: 0,
       total_won: 0,
     }, { onConflict: 'id', ignoreDuplicates: true });
 
-    profile = { username, balance: 1000 };
+    profile = { username, balance: 100000, streak_count: 0 };
   }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F9FAFB] dark:bg-[#0F172A]">
-      <Header balance={profile.balance} username={profile.username} />
+      <Header balance={profile.balance} username={profile.username} streak={(profile as { streak_count?: number }).streak_count ?? 0} />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">{children}</main>
     </div>
   );

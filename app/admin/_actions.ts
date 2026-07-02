@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { sendWinEmails } from '@/lib/notify';
 
 export async function updateMarket(marketId: string, data: {
   title_en?: string;
@@ -21,6 +22,8 @@ export async function updateMarket(marketId: string, data: {
 export async function resolveMarket(marketId: string, outcome: boolean) {
   const supabase = await createAdminClient();
 
+  const { data: market } = await supabase.from('markets').select('title_tr').eq('id', marketId).single();
+
   await supabase.from('markets').update({
     status: 'resolved', outcome, resolved_at: new Date().toISOString(),
   }).eq('id', marketId);
@@ -31,19 +34,112 @@ export async function resolveMarket(marketId: string, outcome: boolean) {
     .eq('market_id', marketId)
     .eq('status', 'pending');
 
+  const wins: { userId: string; marketTitle: string; amount: number; payout: number; pick: string }[] = [];
   for (const bet of bets ?? []) {
     const won = (bet.side === 'yes' && outcome) || (bet.side === 'no' && !outcome);
     const settled_at = new Date().toISOString();
     if (won) {
       await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
       await supabase.rpc('credit_and_update_user', { p_user_id: bet.user_id, p_amount: bet.potential_payout });
+      wins.push({
+        userId: bet.user_id, marketTitle: market?.title_tr ?? '', amount: bet.amount,
+        payout: bet.potential_payout, pick: bet.side === 'yes' ? 'EVET' : 'HAYIR',
+      });
     } else {
       await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
     }
   }
+  await sendWinEmails(supabase, wins);
 
   revalidatePath('/admin/markets');
   revalidatePath(`/admin/markets/${marketId}`);
+}
+
+
+export async function resolveMarketMulti(marketId: string, winningOptionId: string) {
+  const supabase = await createAdminClient();
+
+  const [{ data: market }, { data: option }] = await Promise.all([
+    supabase.from('markets').select('title_tr').eq('id', marketId).single(),
+    supabase.from('market_options').select('label_tr').eq('id', winningOptionId).single(),
+  ]);
+  if (!option) return { error: 'Seçenek bulunamadı.' };
+
+  await supabase.from('markets').update({
+    status: 'resolved', outcome: null, winning_option_id: winningOptionId,
+    resolved_at: new Date().toISOString(),
+  }).eq('id', marketId);
+
+  const { data: bets } = await supabase
+    .from('bets')
+    .select('*')
+    .eq('market_id', marketId)
+    .eq('status', 'pending');
+
+  const wins: { userId: string; marketTitle: string; amount: number; payout: number; pick: string }[] = [];
+  for (const bet of bets ?? []) {
+    const won = bet.option_id === winningOptionId;
+    const settled_at = new Date().toISOString();
+    if (won) {
+      await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
+      await supabase.rpc('credit_and_update_user', { p_user_id: bet.user_id, p_amount: bet.potential_payout });
+      wins.push({
+        userId: bet.user_id, marketTitle: market?.title_tr ?? '', amount: bet.amount,
+        payout: bet.potential_payout, pick: option.label_tr,
+      });
+    } else {
+      await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
+    }
+  }
+  await sendWinEmails(supabase, wins);
+
+  revalidatePath('/admin/markets');
+  revalidatePath(`/admin/markets/${marketId}`);
+  return { success: true };
+}
+
+export async function createMultiMarket(data: {
+  title_en: string;
+  title_tr: string;
+  category: string;
+  region: string;
+  ends_at: string;
+  options: { label_tr: string; label_en: string; weight: number }[];
+  simulated_volume: number;
+}) {
+  const supabase = await createAdminClient();
+
+  const { data: market, error } = await supabase.from('markets').insert({
+    title_en: data.title_en,
+    title_tr: data.title_tr,
+    category: data.category,
+    region: data.region,
+    kind: 'multi',
+    yes_prob: 0.5,
+    yes_pool: 0,
+    no_pool: 0,
+    total_volume: data.simulated_volume,
+    participant_count: Math.max(10, Math.floor(data.simulated_volume / 180)),
+    ends_at: data.ends_at,
+    status: 'active',
+    outcome: null,
+  }).select().single();
+
+  if (error || !market) return { error: error?.message ?? 'Market oluşturulamadı.' };
+
+  const totalWeight = data.options.reduce((s, o) => s + o.weight, 0) || 1;
+  await supabase.from('market_options').insert(
+    data.options.map((o, i) => ({
+      market_id: market.id,
+      label_tr: o.label_tr,
+      label_en: o.label_en || o.label_tr,
+      pool: Math.floor(data.simulated_volume * (o.weight / totalWeight)),
+      sort: i,
+    }))
+  );
+
+  revalidatePath('/admin/markets');
+  return { success: true };
 }
 
 export async function deleteMarket(marketId: string) {

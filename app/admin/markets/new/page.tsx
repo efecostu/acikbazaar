@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createMarket, generateMarketWithAI } from '@/app/admin/_actions';
+import { createMarket, createMultiMarket, generateMarketWithAI } from '@/app/admin/_actions';
 
 const CATEGORIES = ['economy', 'sports', 'politics', 'tech', 'world', 'entertainment', 'weather'];
 
@@ -19,6 +19,15 @@ export default function NewMarketPage() {
     yes_prob: 50, ends_at: '', tag: '',
     simulated_volume: 20000,
   });
+  const [kind, setKind] = useState<'binary' | 'multi'>('binary');
+  const [multiOptions, setMultiOptions] = useState([
+    { label_tr: '', weight: 50 },
+    { label_tr: '', weight: 50 },
+  ]);
+
+  function setOption(i: number, key: 'label_tr' | 'weight', value: string | number) {
+    setMultiOptions((opts) => opts.map((o, j) => j === i ? { ...o, [key]: value } : o));
+  }
 
   function set<K extends keyof typeof form>(key: K, value: typeof form[K]) {
     setForm(f => ({ ...f, [key]: value }));
@@ -27,6 +36,23 @@ export default function NewMarketPage() {
   async function handleCreate() {
     if (!form.title_en || !form.title_tr || !form.ends_at) {
       setMsg('Başlık (EN/TR) ve kapanış tarihi zorunlu.');
+      return;
+    }
+    if (kind === 'multi') {
+      const valid = multiOptions.filter((o) => o.label_tr.trim());
+      if (valid.length < 2) { setMsg('En az 2 seçenek gerekli.'); return; }
+      startTransition(async () => {
+        await createMultiMarket({
+          title_en: form.title_en,
+          title_tr: form.title_tr,
+          category: form.category,
+          region: form.region,
+          ends_at: new Date(form.ends_at).toISOString(),
+          options: valid.map((o) => ({ label_tr: o.label_tr.trim(), label_en: o.label_tr.trim(), weight: Number(o.weight) || 1 })),
+          simulated_volume: form.simulated_volume,
+        });
+        router.push('/admin/markets');
+      });
       return;
     }
     startTransition(async () => {
@@ -110,6 +136,18 @@ export default function NewMarketPage() {
 
       {/* Manual Form */}
       <div className="bg-white border border-[#E5E7EB] rounded-xl p-6 flex flex-col gap-4">
+        {/* Tür seçimi */}
+        <div className="flex gap-2">
+          {(['binary', 'multi'] as const).map((k) => (
+            <button key={k} onClick={() => setKind(k)}
+              className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-semibold transition-colors ${
+                kind === k ? 'border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]' : 'border-[#E5E7EB] text-[#6B7280]'
+              }`}>
+              {k === 'binary' ? 'EVET / HAYIR' : 'Çoklu Seçenek'}
+            </button>
+          ))}
+        </div>
+
         <div>
           <label className={labelCls}>Başlık (EN) *</label>
           <input value={form.title_en} onChange={e => set('title_en', e.target.value)}
@@ -167,6 +205,32 @@ export default function NewMarketPage() {
               onChange={e => set('simulated_volume', Number(e.target.value))} className={inputCls} />
           </div>
         </div>
+        {kind === 'multi' && (
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>Seçenekler (ağırlık = başlangıç havuz payı)</label>
+            {multiOptions.map((o, i) => (
+              <div key={i} className="flex gap-2">
+                <input value={o.label_tr} onChange={(e) => setOption(i, 'label_tr', e.target.value)}
+                  placeholder={`Seçenek ${i + 1} (örn: Galatasaray)`} className={inputCls} />
+                <input type="number" min={1} max={100} value={o.weight}
+                  onChange={(e) => setOption(i, 'weight', Number(e.target.value))}
+                  className={`${inputCls} !w-24`} title="Ağırlık" />
+                {multiOptions.length > 2 && (
+                  <button onClick={() => setMultiOptions((opts) => opts.filter((_, j) => j !== i))}
+                    className="text-red-500 text-sm px-2">✗</button>
+                )}
+              </div>
+            ))}
+            {multiOptions.length < 6 && (
+              <button onClick={() => setMultiOptions((opts) => [...opts, { label_tr: '', weight: 20 }])}
+                className="text-xs font-semibold text-[#16A34A] self-start hover:underline">
+                + Seçenek ekle
+              </button>
+            )}
+          </div>
+        )}
+
+        {kind === 'binary' && (
         <div>
           <label className={labelCls}>EVET Olasılığı: %{form.yes_prob}</label>
           <input type="range" min={5} max={95} value={form.yes_prob}
@@ -177,6 +241,7 @@ export default function NewMarketPage() {
             <span>%95 (EVET favori)</span>
           </div>
         </div>
+        )}
 
         <button onClick={handleCreate}
           disabled={isPending || !form.title_en || !form.title_tr || !form.ends_at}

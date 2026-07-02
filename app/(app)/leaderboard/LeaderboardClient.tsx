@@ -34,7 +34,12 @@ export function LeaderboardClient({ entries }: Props) {
             <div key={entry.username}
               className="grid grid-cols-[3rem_1fr_repeat(4,auto)] gap-4 px-5 py-3.5 border-b border-[#F9FAFB] dark:border-[#334155] last:border-0 hover:bg-[#FAFAFA] dark:hover:bg-[#0F172A] transition-colors items-center text-sm">
               <span className="text-[#9CA3AF] dark:text-[#64748B] font-medium">{i < 3 ? MEDALS[i] : `#${i + 1}`}</span>
-              <span className={`font-semibold ${i === 0 ? 'text-[#16A34A]' : 'text-[#111827] dark:text-[#F1F5F9]'}`}>@{entry.username}</span>
+              <span className={`font-semibold ${i === 0 ? 'text-[#16A34A]' : 'text-[#111827] dark:text-[#F1F5F9]'}`}>
+                @{entry.username}
+                {entry.is_bot && (
+                  <span className="ml-1.5 text-[9px] font-bold uppercase bg-[var(--rise-soft)] text-[var(--rise)] border border-[var(--rise-line)] px-1.5 py-0.5 rounded align-middle">BOT</span>
+                )}
+              </span>
               <span className="hidden sm:block text-[#6B7280] dark:text-[#94A3B8] text-xs">◈{formatCredits(entry.balance)}</span>
               <span className="hidden sm:block text-[#6B7280] dark:text-[#94A3B8] text-xs">{entry.total_bets}</span>
               <span className="hidden sm:block text-[#6B7280] dark:text-[#94A3B8] text-xs">{entry.win_rate}%</span>

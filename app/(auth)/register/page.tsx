@@ -38,11 +38,11 @@ export default function RegisterPage() {
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
     if (data.user) {
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id, username, balance: 1000, total_bets: 0, total_won: 0,
+        id: data.user.id, username, balance: 100000, total_bets: 0, total_won: 0,
       });
       if (profileError) { setError('Profil oluşturulamadı: ' + profileError.message); setLoading(false); return; }
     }
-    router.push('/markets');
+    router.push('/onboarding');
     router.refresh();
   }
 
@@ -73,7 +73,7 @@ export default function RegisterPage() {
 
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#111827] mb-1">Kayıt Ol</h2>
-          <p className="text-sm text-[#6B7280] mb-5">Başlangıç kredisi: <span className="font-semibold text-[#16A34A]">◈1,000</span></p>
+          <p className="text-sm text-[#6B7280] mb-5">Başlangıç kredisi: <span className="font-semibold text-[#16A34A]">◈100.000</span></p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input id="username" type="text" label="Kullanıcı Adı" placeholder="tahmincu42"
