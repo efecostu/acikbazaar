@@ -249,7 +249,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION place_bet_option(UUID, UUID, INTEGER) TO authenticated;
 
 -- 8. Botlar leaderboard'a geri döner (BOT rozeti için is_bot kolonu da gelir)
-CREATE OR REPLACE VIEW leaderboard AS
+-- Kolon eklendiği için view önce düşürülmeli (CREATE OR REPLACE kolon ekleyemez)
+DROP VIEW IF EXISTS leaderboard;
+CREATE VIEW leaderboard AS
 SELECT
   p.username,
   p.is_bot,
