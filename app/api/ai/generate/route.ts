@@ -78,9 +78,11 @@ Return ONLY a valid JSON array (no markdown, no explanation):
 
   let markets: Record<string, unknown>[];
   try {
-    markets = JSON.parse(text);
+    // Model bazen JSON'un etrafına açıklama metni koyuyor — dizi kısmını çek
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    markets = JSON.parse(jsonMatch?.[0] ?? text);
   } catch {
-    return Response.json({ error: 'Failed to parse AI response', raw: text }, { status: 500 });
+    return Response.json({ error: 'Failed to parse AI response', raw: text.slice(0, 500) }, { status: 500 });
   }
 
   // Sunucu tarafı kalite kontrolü — model ne dönerse dönsün bayat market DB'ye giremez
