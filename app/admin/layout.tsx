@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin',              label: 'Dashboard',    icon: '📊' },
   { href: '/admin/markets',      label: 'Marketler',    icon: '📋' },
   { href: '/admin/markets/new',  label: 'Yeni Market',  icon: '➕' },
+  { href: '/admin/suggestions',  label: 'Öneriler',     icon: '💡' },
   { href: '/admin/bets',         label: 'Bahisler',     icon: '🎯' },
 ];
 

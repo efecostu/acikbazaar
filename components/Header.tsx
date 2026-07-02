@@ -61,7 +61,7 @@ export function Header({ balance, username }: HeaderProps) {
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-sm transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2 sm:gap-6">
         {/* Logo */}
-        <Link href="/markets" className="flex items-center gap-2 shrink-0">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <span className="text-[var(--rise)] font-bold text-lg leading-none">◈</span>
           <span className="font-display text-[15px] font-bold text-[var(--ink)] tracking-tight">AçıkBazaar</span>
         </Link>

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Market, MarketCategory, MarketRegion } from '@/types';
 import { MarketCard } from '@/components/MarketCard';
 import { useLang } from '@/contexts/LangContext';
-import { categoryLabel } from '@/lib/utils';
+import { categoryLabel, categoryEmoji } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
@@ -32,9 +33,17 @@ export function MarketsClient({ markets }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div>
-        <h1 className="font-display text-[26px] font-bold text-[var(--ink)]">{t('Aktif Marketler', 'Active Markets')}</h1>
-        <p className="text-sm text-[var(--ink-2)] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-[26px] font-bold text-[var(--ink)]">{t('Aktif Marketler', 'Active Markets')}</h1>
+          <p className="text-sm text-[var(--ink-2)] mt-1">{t('Gerçek hayat eventleri · Sanal kredi ile tahmin yap', 'Real-life events · Predict with virtual credits')}</p>
+        </div>
+        <Link
+          href="/markets/suggest"
+          className="text-sm font-semibold text-[var(--rise)] border border-[var(--rise-line)] bg-[var(--rise-soft)] px-4 py-2 rounded-xl hover:brightness-105 transition-all"
+        >
+          💡 {t('Market Öner', 'Suggest a Market')}
+        </Link>
       </div>
 
       {/* Search */}
@@ -61,7 +70,7 @@ export function MarketsClient({ markets }: Props) {
                   ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
                   : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
-              {cat === 'all' ? t('Tümü', 'All') : categoryLabel(cat, lang)}
+              {cat === 'all' ? t('Tümü', 'All') : `${categoryEmoji(cat)} ${categoryLabel(cat, lang)}`}
             </button>
           ))}
         </div>

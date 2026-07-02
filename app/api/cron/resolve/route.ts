@@ -23,19 +23,27 @@ export async function GET() {
 
   const supabase = await createAdminClient();
 
-  // Find all active markets that have passed their end date
-  const { data: expiredMarkets, error: fetchError } = await supabase
+  // Günlük kalite kontrolü: süresi dolanlar + başlığı geçmiş yıla referans verenler.
+  // (Eski seed'ler "2025..." başlıklı ama ends_at ileri tarihli olabiliyordu — onlar da çözülür.)
+  const { data: activeMarkets, error: fetchError } = await supabase
     .from('markets')
     .select('*')
-    .eq('status', 'active')
-    .lt('ends_at', new Date().toISOString());
+    .eq('status', 'active');
 
   if (fetchError) {
     return Response.json({ error: fetchError.message }, { status: 500 });
   }
 
-  if (!expiredMarkets || expiredMarkets.length === 0) {
-    return Response.json({ message: 'No expired markets', resolved: 0 });
+  const nowIso = new Date().toISOString();
+  const currentYear = new Date().getFullYear();
+  const expiredMarkets = (activeMarkets ?? []).filter((m) => {
+    if (m.ends_at < nowIso) return true;
+    const years = `${m.title_en} ${m.title_tr}`.match(/\b20\d{2}\b/g) ?? [];
+    return years.some((y: string) => parseInt(y) < currentYear);
+  });
+
+  if (expiredMarkets.length === 0) {
+    return Response.json({ message: 'No expired or stale markets', resolved: 0 });
   }
 
   const results = [];

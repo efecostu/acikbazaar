@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import { MarketCard } from '@/components/MarketCard';
 import { LangProvider } from '@/contexts/LangContext';
 import type { Market } from '@/types';
@@ -12,8 +11,8 @@ const d = (days: number) => new Date(Date.now() + days * 864e5).toISOString();
 const DEMO_MARKETS: Market[] = [
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000001',
-    title_en: 'Will Galatasaray win the 2024-25 Süper Lig?',
-    title_tr: 'Galatasaray 2024-25 Süper Ligi şampiyon bitirir mi?',
+    title_en: 'Will Galatasaray win the 2026-27 Süper Lig?',
+    title_tr: 'Galatasaray 2026-27 Süper Ligi şampiyon bitirir mi?',
     description_en: 'Based on final Süper Lig standings.', description_tr: 'Sezon sonu puan tablosuna göre.',
     category: 'sports', region: 'turkey', yes_prob: 0.74, tag: 'trending', status: 'active', outcome: null,
     ends_at: d(61), created_at: new Date().toISOString(),
@@ -21,8 +20,8 @@ const DEMO_MARKETS: Market[] = [
   },
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000004',
-    title_en: 'Will TCMB cut rates before end of Q3 2025?',
-    title_tr: 'TCMB 2025 Q3 sonuna kadar faiz indirir mi?',
+    title_en: 'Will TCMB cut rates before end of Q3 2026?',
+    title_tr: 'TCMB 2026 Q3 sonuna kadar faiz indirir mi?',
     description_en: 'At least 25bps cut counts as YES.', description_tr: 'En az 25 baz puanlık indirim EVET sayılır.',
     category: 'economy', region: 'turkey', yes_prob: 0.67, tag: 'hot', status: 'active', outcome: null,
     ends_at: d(130), created_at: new Date().toISOString(),
@@ -30,8 +29,8 @@ const DEMO_MARKETS: Market[] = [
   },
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000010',
-    title_en: 'Will CHP win Istanbul mayoral election in 2025?',
-    title_tr: 'CHP 2025 İstanbul Büyükşehir seçimini kazanır mı?',
+    title_en: 'Will CHP win Istanbul mayoral election in 2026?',
+    title_tr: 'CHP 2026 İstanbul Büyükşehir seçimini kazanır mı?',
     description_en: 'Based on official YSK results.', description_tr: 'YSK resmi sonuçlarına göre.',
     category: 'politics', region: 'turkey', yes_prob: 0.72, tag: 'hot', status: 'active', outcome: null,
     ends_at: d(200), created_at: new Date().toISOString(),
@@ -39,8 +38,8 @@ const DEMO_MARKETS: Market[] = [
   },
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000008',
-    title_en: 'Will Bitcoin hit $120K before 2026?',
-    title_tr: 'Bitcoin 2026 öncesinde 120.000$\'a ulaşır mı?',
+    title_en: 'Will Bitcoin hit $120K before 2027?',
+    title_tr: 'Bitcoin 2027 öncesinde 120.000$\'a ulaşır mı?',
     description_en: 'CoinGecko 24h average.', description_tr: 'CoinGecko 24 saatlik ortalama.',
     category: 'tech', region: 'global', yes_prob: 0.48, tag: 'hot', status: 'active', outcome: null,
     ends_at: d(153), created_at: new Date().toISOString(),
@@ -48,8 +47,8 @@ const DEMO_MARKETS: Market[] = [
   },
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000013',
-    title_en: 'Will Tarkan release a new album or single in 2025?',
-    title_tr: 'Tarkan 2025 yılında yeni albüm veya single çıkarır mı?',
+    title_en: 'Will Tarkan release a new album or single in 2026?',
+    title_tr: 'Tarkan 2026 yılında yeni albüm veya single çıkarır mı?',
     description_en: 'Official music release on major platforms.', description_tr: 'Büyük platformlarda resmi müzik yayını.',
     category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: '🔥', status: 'active', outcome: null,
     ends_at: d(220), created_at: new Date().toISOString(),
@@ -57,8 +56,8 @@ const DEMO_MARKETS: Market[] = [
   },
   {
     id: 'f1a2b3c4-0001-0001-0001-000000000014',
-    title_en: 'Will Istanbul experience a flash flood warning in Summer 2025?',
-    title_tr: 'İstanbul\'da 2025 yazında sel uyarısı verilir mi?',
+    title_en: 'Will Istanbul experience a flash flood warning in Summer 2026?',
+    title_tr: 'İstanbul\'da 2026 yazında sel uyarısı verilir mi?',
     description_en: 'Based on official AFAD or meteorology warnings.', description_tr: 'AFAD veya meteoroloji resmi uyarısına göre.',
     category: 'weather', region: 'turkey', yes_prob: 0.79, tag: null, status: 'active', outcome: null,
     ends_at: d(100), created_at: new Date().toISOString(),
@@ -69,11 +68,24 @@ const DEMO_MARKETS: Market[] = [
 export default async function LandingPage() {
   const isDemoMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
 
+  let loggedIn = false;
+  let markets: Market[] = DEMO_MARKETS;
+
   if (!isDemoMode) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) redirect('/markets');
+    const [{ data: { user } }, { data: liveMarkets }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('markets').select('*').eq('status', 'active')
+        .gt('ends_at', new Date().toISOString())
+        .order('total_volume', { ascending: false }).limit(6),
+    ]);
+    loggedIn = !!user;
+    if (liveMarkets && liveMarkets.length > 0) markets = liveMarkets;
   }
+
+  // Gerçek marketler varsa kartlar doğrudan detay sayfasına gider (marketler public);
+  // demo fallback'te sahte ID'ler 404 vermesin diye listeye yönlendirilir
+  const cardHref = markets === DEMO_MARKETS ? '/markets' : undefined;
 
   return (
     <LangProvider>
@@ -89,12 +101,20 @@ export default async function LandingPage() {
               <Link href="/markets" className="hidden sm:block text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
                 Marketler
               </Link>
-              <Link href="/login" className="text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
-                Giriş Yap
-              </Link>
-              <Link href="/register" className="bg-[var(--rise)] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:brightness-110 transition-all">
-                Ücretsiz Başla
-              </Link>
+              {loggedIn ? (
+                <Link href="/markets" className="bg-[var(--rise)] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:brightness-110 transition-all">
+                  Marketlere Git →
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" className="text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
+                    Giriş Yap
+                  </Link>
+                  <Link href="/register" className="bg-[var(--rise)] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:brightness-110 transition-all">
+                    Ücretsiz Başla
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -114,12 +134,14 @@ export default async function LandingPage() {
               tahmin gücünle sıralamada yüksel.
             </p>
             <div className="flex gap-3 flex-wrap">
-              <Link href="/register" className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
-                Tahmin etmeye başla
+              <Link href={loggedIn ? '/markets' : '/register'} className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
+                {loggedIn ? 'Marketlere göz at' : 'Tahmin etmeye başla'}
               </Link>
-              <Link href="/markets" className="border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] font-semibold px-6 py-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
-                Marketlere göz at
-              </Link>
+              {!loggedIn && (
+                <Link href="/markets" className="border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] font-semibold px-6 py-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
+                  Marketlere göz at
+                </Link>
+              )}
             </div>
           </div>
 
@@ -146,8 +168,8 @@ export default async function LandingPage() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DEMO_MARKETS.map((market) => (
-              <MarketCard key={market.id} market={market} href="/markets" />
+            {markets.map((market) => (
+              <MarketCard key={market.id} market={market} href={cardHref} />
             ))}
           </div>
 
@@ -155,10 +177,12 @@ export default async function LandingPage() {
           <div className="mt-14 tabela rounded-2xl px-8 py-10 text-center">
             <h3 className="font-display text-2xl font-bold text-white mb-2">Var mısın?</h3>
             <p className="text-sm text-[var(--board-text)] mb-6">
-              Kayıt ol, ◈1.000 kredin hazır. Kredi kartı yok, gerçek para yok — hiçbir zaman.
+              {loggedIn
+                ? 'Marketler seni bekliyor — tahminini koy, sıralamada yüksel.'
+                : 'Kayıt ol, ◈1.000 kredin hazır. Kredi kartı yok, gerçek para yok — hiçbir zaman.'}
             </p>
-            <Link href="/register" className="inline-block bg-[var(--rise)] text-white font-semibold px-8 py-3 rounded-xl hover:brightness-110 transition-all text-sm [font-family:var(--font-body)]">
-              Ücretsiz Hesap Aç
+            <Link href={loggedIn ? '/markets' : '/register'} className="inline-block bg-[var(--rise)] text-white font-semibold px-8 py-3 rounded-xl hover:brightness-110 transition-all text-sm [font-family:var(--font-body)]">
+              {loggedIn ? 'Marketlere Git' : 'Ücretsiz Hesap Aç'}
             </Link>
           </div>
 

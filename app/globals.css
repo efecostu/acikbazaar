@@ -110,6 +110,49 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ============================================================
+   Etkileşim cilası — akıcı, tutarlı, erişilebilir
+   ============================================================ */
+
+/* Tüm tıklanabilirler için yumuşak varsayılan geçiş */
+a, button, input, textarea, select, [role="button"] {
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    filter 0.15s ease;
+}
+
+/* Basma hissi: butonlar tıklanınca hafifçe çöker */
+button:active:not(:disabled), a:active, [role="button"]:active {
+  transform: scale(0.985);
+}
+
+/* Klavye ile gezenler için görünür focus halkası */
+:focus-visible {
+  outline: 2px solid var(--rise);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Sayfa içeriği girişi: route değişiminde yumuşak yükselme */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+main > * {
+  animation: page-enter 0.28s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a, button, input, textarea, select, [role="button"] { transition: none; }
+  button:active:not(:disabled), a:active, [role="button"]:active { transform: none; }
+  main > * { animation: none; }
+}
+
+/* ============================================================
    İmza: tabela şeridi — döviz bürosu kotasyon paneli
    ============================================================ */
 .tabela {

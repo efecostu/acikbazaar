@@ -92,6 +92,76 @@ export async function createMarket(data: {
   revalidatePath('/admin/markets');
 }
 
+export async function approveSuggestion(suggestionId: string) {
+  const supabase = await createAdminClient();
+  const { data: s } = await supabase
+    .from('market_suggestions')
+    .select('*')
+    .eq('id', suggestionId)
+    .single();
+  if (!s || s.status !== 'pending') return { error: 'Öneri bulunamadı veya zaten işlenmiş.' };
+
+  // Claude: EN çeviri + gerçekçi olasılık tahmini (hızlı, web search'süz)
+  let title_en = s.title_tr;
+  let yes_prob = 0.5;
+  try {
+    const Anthropic = (await import('@anthropic-ai/sdk')).default;
+    const client = new Anthropic();
+    const resp = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: `Turkish prediction-market question. Translate to English (max 12 words, punchy) and estimate a realistic YES probability between 0.05 and 0.95.
+Return ONLY JSON: {"title_en":"...","yes_prob":0.55}
+
+Question: ${s.title_tr}
+${s.details ? `Details: ${s.details}` : ''}
+Resolution date: ${s.ends_at}
+Today: ${new Date().toISOString().slice(0, 10)}`,
+      }],
+    });
+    const text = resp.content[0]?.type === 'text' ? resp.content[0].text : '';
+    const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
+    if (parsed.title_en) title_en = parsed.title_en;
+    const p = Number(parsed.yes_prob);
+    if (p >= 0.05 && p <= 0.95) yes_prob = p;
+  } catch { /* çeviri başarısızsa TR başlıkla ve %50 ile devam */ }
+
+  const vol = 2000 + Math.floor(Math.random() * 6000);
+  const yes_pool = Math.floor(vol * yes_prob);
+
+  const { error } = await supabase.from('markets').insert({
+    title_en,
+    title_tr: s.title_tr,
+    description_en: null,
+    description_tr: s.details,
+    category: s.category,
+    region: 'turkey',
+    yes_prob,
+    yes_pool,
+    no_pool: vol - yes_pool,
+    total_volume: vol,
+    participant_count: Math.max(10, Math.floor(vol / 180)),
+    ends_at: new Date(s.ends_at).toISOString(),
+    tag: null,
+    status: 'active',
+    outcome: null,
+  });
+  if (error) return { error: error.message };
+
+  await supabase.from('market_suggestions').update({ status: 'approved' }).eq('id', suggestionId);
+  revalidatePath('/admin/suggestions');
+  revalidatePath('/admin/markets');
+  return { success: true };
+}
+
+export async function rejectSuggestion(suggestionId: string) {
+  const supabase = await createAdminClient();
+  await supabase.from('market_suggestions').update({ status: 'rejected' }).eq('id', suggestionId);
+  revalidatePath('/admin/suggestions');
+}
+
 export async function generateMarketWithAI(category: string, region: string) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
   const res = await fetch(`${baseUrl}/api/ai/generate`, {
