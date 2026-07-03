@@ -1,0 +1,14 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#0C1F16"/>
+  <!-- Faceted gem mark — AçıkBazaar ana logo işareti -->
+  <g>
+    <!-- üst yüz -->
+    <path d="M32 14 L44 24 L32 30 L20 24 Z" fill="#2FD588"/>
+    <!-- sol yüz (koyu) -->
+    <path d="M20 24 L32 30 L32 50 L24 40 Z" fill="#0BA05F"/>
+    <!-- sağ yüz (orta) -->
+    <path d="M44 24 L32 30 L32 50 L40 40 Z" fill="#1BBE73"/>
+    <!-- ışık vurgusu -->
+    <path d="M32 14 L38 19 L32 22 L26 19 Z" fill="#8FF0C4" opacity="0.85"/>
+  </g>
+</svg>
