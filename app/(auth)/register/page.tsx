@@ -16,7 +16,17 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Supabase hata mesajlarını anlaşılır Türkçeye çevir
+  const ERROR_MAP: [string, string][] = [
+    ['already registered', 'Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.'],
+    ['Database error', 'Kayıt sırasında bir sorun oluştu. Birkaç saniye sonra tekrar dene.'],
+    ['Password should be', 'Şifre en az 8 karakter olmalı.'],
+    ['invalid format', 'E-posta adresi geçersiz görünüyor.'],
+    ['rate limit', 'Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.'],
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +35,7 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    setError('');
+    setError(''); setInfo('');
     if (username.length < 3) {
       setError('Kullanıcı adı en az 3 karakter olmalı.');
       setLoading(false);
@@ -35,12 +45,18 @@ export default function RegisterPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email, password, options: { data: { username } },
     });
-    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id, username, balance: 100000, total_bets: 0, total_won: 0,
-      });
-      if (profileError) { setError('Profil oluşturulamadı: ' + profileError.message); setLoading(false); return; }
+    if (signUpError) {
+      const friendly = ERROR_MAP.find(([k]) => signUpError.message.includes(k));
+      setError(friendly ? friendly[1] : signUpError.message);
+      setLoading(false);
+      return;
+    }
+    // Profil DB trigger'ı ile otomatik oluşur (client insert gerekmez).
+    if (!data.session) {
+      // E-posta doğrulama açıksa session gelmez — kullanıcıyı bilgilendir
+      setInfo(`${email} adresine doğrulama linki gönderdik. Linke tıkladıktan sonra giriş yapabilirsin.`);
+      setLoading(false);
+      return;
     }
     router.push('/onboarding');
     router.refresh();
@@ -86,6 +102,11 @@ export default function RegisterPage() {
             {error && (
               <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                 {error}
+              </p>
+            )}
+            {info && (
+              <p className="text-sm text-[#15803D] bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-3 py-2">
+                ✉️ {info}
               </p>
             )}
 

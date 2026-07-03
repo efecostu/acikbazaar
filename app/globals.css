@@ -16,9 +16,9 @@
   --border: #E4E2DA;
   --border-light: #EFEDE7;
 
-  --ink: #171D1A;
-  --ink-2: #5C6660;
-  --ink-3: #98A29B;
+  --ink: #10150F;
+  --ink-2: #525C55;
+  --ink-3: #96A099;
 
   --board: #0C1F16;
   --board-line: #1C3428;
@@ -91,9 +91,13 @@ body {
   background-color: var(--paper);
   color: var(--ink);
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  font-weight: 450; /* Inter Tight: hafif kalın taban — Kalshi yoğunluğu */
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Kalshi tarzı: başlıklar sıkı ve ağır */
+h1, h2, h3 { letter-spacing: -0.02em; }
 
 /* Tip rolleri */
 .font-display {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Bricolage_Grotesque, Figtree, IBM_Plex_Mono } from 'next/font/google';
+import { Bricolage_Grotesque, Inter_Tight, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { LangProvider } from '@/contexts/LangContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -8,7 +8,7 @@ const display = Bricolage_Grotesque({
   subsets: ['latin', 'latin-ext'],
   variable: '--font-display',
 });
-const body = Figtree({
+const body = Inter_Tight({
   subsets: ['latin', 'latin-ext'],
   variable: '--font-body',
 });

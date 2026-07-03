@@ -50,7 +50,7 @@ export function MarketCard({ market, href }: MarketCardProps) {
 
         {/* Başlık + olasılık */}
         <div className="flex items-start justify-between gap-3 px-5 pt-3 pb-4 flex-1">
-          <p className="text-[15px] font-semibold text-[var(--ink)] leading-snug line-clamp-3">
+          <p className="text-[15px] font-bold text-[var(--ink)] leading-snug line-clamp-3">
             {title}
           </p>
           <div className="text-right shrink-0">

@@ -74,7 +74,7 @@ export function Header({ balance, username, streak = 0 }: HeaderProps) {
               key={link.href}
               href={link.href}
               className={cn(
-                'px-3 py-1.5 text-sm rounded-lg transition-colors font-medium',
+                'px-3 py-1.5 text-sm rounded-lg transition-colors font-semibold',
                 pathname.startsWith(link.href)
                   ? 'text-[var(--rise)] bg-[var(--rise-soft)]'
                   : 'text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-[var(--surface-2)]'
