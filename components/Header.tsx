@@ -6,6 +6,7 @@ import { useLang } from '@/contexts/LangContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { createClient } from '@/lib/supabase/client';
 import { formatCredits } from '@/lib/utils';
+import { AnimatedNumber } from './AnimatedNumber';
 import { Button } from './ui/Button';
 import { cn } from '@/lib/utils';
 
@@ -102,7 +103,7 @@ export function Header({ balance, username, streak = 0 }: HeaderProps) {
         {balance !== undefined && (
           <div className="hidden sm:flex items-center gap-1.5 tabela rounded-lg px-3 py-1.5">
             <span className="tabela-rise text-xs">◈</span>
-            <span className="tabela-rise text-sm font-medium">{formatCredits(balance)}</span>
+            <span className="tabela-rise text-sm font-medium"><AnimatedNumber value={balance} format={formatCredits} /></span>
           </div>
         )}
 

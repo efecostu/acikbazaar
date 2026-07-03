@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Market, MarketOption, Bet, BetSide } from '@/types';
 import { useLang } from '@/contexts/LangContext';
@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { AIFavorites } from '@/components/AIFavorites';
 import { ProbChart, ProbPoint } from '@/components/ProbChart';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { celebrate } from '@/lib/confetti';
 
 interface BetWithOption extends Bet {
   market_options?: { label_tr: string; label_en: string } | null;
@@ -37,13 +39,39 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const betBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Canlı market verisi — Realtime ile başkalarının bahisleri anında yansır
+  const [live, setLive] = useState({
+    yes_pool: market.yes_pool,
+    no_pool: market.no_pool,
+    total_volume: market.total_volume,
+    participant_count: market.participant_count,
+  });
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`market-${market.id}`)
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'markets', filter: `id=eq.${market.id}` },
+        (payload) => {
+          const m = payload.new as typeof live;
+          setLive({
+            yes_pool: m.yes_pool, no_pool: m.no_pool,
+            total_volume: m.total_volume, participant_count: m.participant_count,
+          });
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [market.id]);
 
   const isMulti = market.kind === 'multi' && options.length > 0;
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const description = lang === 'tr' ? market.description_tr : market.description_en;
 
-  // Binary oranlar
-  const { yesProb, noProb, yesOdds, noOdds } = calculateOdds(market.yes_pool, market.no_pool);
+  // Binary oranlar (canlı havuzlardan)
+  const { yesProb, noProb, yesOdds, noOdds } = calculateOdds(live.yes_pool, live.no_pool);
   const yesPct = Math.round(yesProb * 100);
 
   // Multi oranlar
@@ -95,6 +123,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       msg += t(` 🔥 ${data.streak}. gün streak — ◈${formatCredits(data.streak_bonus)} bonus!`, ` 🔥 Day ${data.streak} streak — ◈${formatCredits(data.streak_bonus)} bonus!`);
     }
     setSuccess(msg);
+    celebrate(betBtnRef.current);
     setLoading(false);
     router.refresh();
   }
@@ -163,20 +192,20 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
               <div>
                 <div className="tabela-label mb-1.5">{t('evet', 'yes')}</div>
                 <div className="tabela-rise text-[40px] font-semibold leading-none">
-                  {yesPct}<span className="text-[22px]">%</span>
+                  <AnimatedNumber value={yesPct} /><span className="text-[22px]">%</span>
                 </div>
                 <div className="text-[13px] mt-1.5 opacity-80">
-                  <span className="tabela-rise">{yesOdds.toFixed(2)}x</span>
+                  <span className="tabela-rise"><AnimatedNumber value={yesOdds} format={(v) => v.toFixed(2)} />x</span>
                 </div>
               </div>
               <div className="tabela-divider w-px self-stretch mx-4" />
               <div className="text-right">
                 <div className="tabela-label mb-1.5">{t('hayır', 'no')}</div>
                 <div className="tabela-fall text-[40px] font-semibold leading-none">
-                  {100 - yesPct}<span className="text-[22px]">%</span>
+                  <AnimatedNumber value={100 - yesPct} /><span className="text-[22px]">%</span>
                 </div>
                 <div className="text-[13px] mt-1.5 opacity-80">
-                  <span className="tabela-fall">{noOdds.toFixed(2)}x</span>
+                  <span className="tabela-fall"><AnimatedNumber value={noOdds} format={(v) => v.toFixed(2)} />x</span>
                 </div>
               </div>
             </div>
@@ -184,8 +213,8 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
               <div className="h-full rounded-full" style={{ width: `${yesPct}%`, background: 'var(--rise-bright)', transition: 'width 0.4s ease' }} />
             </div>
             <div className="flex items-center justify-between mt-3 text-[11px]" style={{ color: 'var(--board-text)' }}>
-              <span>◈{formatCredits(market.total_volume)} {t('hacim', 'volume')}</span>
-              <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
+              <span>◈<AnimatedNumber value={live.total_volume} format={formatCredits} flash={false} /> {t('hacim', 'volume')}</span>
+              <span><AnimatedNumber value={live.participant_count} flash={false} /> {t('katılımcı', 'traders')}</span>
             </div>
           </div>
         )}
@@ -306,7 +335,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
           {error && <p className="text-sm text-[var(--fall)]">{error}</p>}
           {success && <p className="text-sm text-[var(--rise)] font-medium">{success}</p>}
 
-          <Button onClick={handlePlaceBet} disabled={!canBet || loading || amount <= 0 || amount > balance} size="lg" className="w-full">
+          <Button ref={betBtnRef} onClick={handlePlaceBet} disabled={!canBet || loading || amount <= 0 || amount > balance} size="lg" className="w-full">
             {loading ? t('İşleniyor...', 'Processing...') : t('Tahminini Onayla', 'Confirm Bet')}
           </Button>
         </div>

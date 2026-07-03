@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Market, MarketCategory, MarketRegion } from '@/types';
 import { MarketCard } from '@/components/MarketCard';
+import { LiveTicker, TradeRow } from '@/components/LiveTicker';
 import { useLang } from '@/contexts/LangContext';
 import { categoryLabel, categoryEmoji } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -14,9 +15,10 @@ const REGIONS: (MarketRegion | 'all')[] = ['all', 'turkey', 'global'];
 interface Props {
   markets: Market[];
   interests?: string[] | null;
+  trades?: TradeRow[];
 }
 
-export function MarketsClient({ markets, interests = null }: Props) {
+export function MarketsClient({ markets, interests = null, trades = [] }: Props) {
   const { lang, t } = useLang();
   const hasInterests = !!interests && interests.length > 0 && interests.length < 7;
   const [category, setCategory] = useState<MarketCategory | 'all' | 'foryou'>(hasInterests ? 'foryou' : 'all');
@@ -38,6 +40,9 @@ export function MarketsClient({ markets, interests = null }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Canlı işlem şeridi */}
+      <LiveTicker initialTrades={trades} />
+
       {/* Header */}
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>

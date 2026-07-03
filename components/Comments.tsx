@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/contexts/LangContext';
@@ -32,6 +32,19 @@ function timeAgo(dateStr: string, lang: 'tr' | 'en'): string {
 export function Comments({ marketId, userId, initialComments }: Props) {
   const { lang, t } = useLang();
   const router = useRouter();
+
+  // Realtime: bu markete yeni yorum düşünce sunucudan tazele
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`comments-${marketId}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comments', filter: `market_id=eq.${marketId}` },
+        () => router.refresh())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marketId]);
   const [content, setContent] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');

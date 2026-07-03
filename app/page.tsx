@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { MarketCard } from '@/components/MarketCard';
+import { HeroTicker } from '@/components/HeroTicker';
 import { LangProvider } from '@/contexts/LangContext';
 import type { Market } from '@/types';
 
@@ -128,11 +129,19 @@ export default async function LandingPage() {
             <h1 className="font-display text-[44px] sm:text-[58px] font-bold text-[var(--ink)] leading-[1.05] tracking-tight mb-5">
               Olacak mı,<br />olmayacak mı?
             </h1>
-            <p className="text-lg text-[var(--ink-2)] leading-relaxed mb-8 max-w-xl">
+            <p className="text-lg text-[var(--ink-2)] leading-relaxed mb-5 max-w-xl">
               Faizden Süper Lig&apos;e, seçimden Bitcoin&apos;e — gerçek hayat sorularına
               EVET ya da HAYIR de. Gerçek para yok; ◈100.000 sanal krediyle başla,
               tahmin gücünle sıralamada yüksel.
             </p>
+            <HeroTicker
+              items={markets.slice(0, 6).map((m) => ({
+                title: m.title_tr,
+                yesPct: Math.round(
+                  (m.yes_pool / Math.max(m.yes_pool + m.no_pool, 1)) * 100
+                ),
+              }))}
+            />
             <div className="flex gap-3 flex-wrap">
               <Link href={loggedIn ? '/markets' : '/register'} className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
                 {loggedIn ? 'Marketlere göz at' : 'Tahmin etmeye başla'}
