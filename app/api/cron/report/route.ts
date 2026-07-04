@@ -191,12 +191,34 @@ export async function GET() {
   `.trim();
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const subject = `◈ AçıkBazaar Günlük Rapor — ${today}`;
+
   const { error } = await resend.emails.send({
     from: 'AçıkBazaar <rapor@acikbazaar.com>',
     to: REPORT_EMAILS,
-    subject: `◈ AçıkBazaar Günlük Rapor — ${today}`,
+    subject,
     html,
   });
+
+  // Domain henüz doğrulanmadıysa Resend test göndericisine düş —
+  // test göndericisi yalnızca hesap sahibine gönderebilir
+  if (error && /not verified|verify/i.test(error.message)) {
+    const { error: fallbackError } = await resend.emails.send({
+      from: 'AçıkBazaar <onboarding@resend.dev>',
+      to: REPORT_EMAILS[0],
+      subject: `${subject} (domain doğrulanana kadar tek alıcı)`,
+      html,
+    });
+    if (fallbackError) {
+      return Response.json({ error: fallbackError.message }, { status: 500 });
+    }
+    return Response.json({
+      sent: true,
+      to: [REPORT_EMAILS[0]],
+      fallback: 'acikbazaar.com Resend\'de doğrulanmadığı için test göndericisi kullanıldı',
+      date: today,
+    });
+  }
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });

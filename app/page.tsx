@@ -98,9 +98,17 @@ export default async function LandingPage() {
               <span className="text-[var(--rise)] font-bold text-lg">◈</span>
               <span className="font-display text-[15px] font-bold text-[var(--ink)]">AçıkBazaar</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Link href="/markets" className="hidden sm:block text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link href="/markets" className="hidden sm:block text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">
                 Marketler
+              </Link>
+              {loggedIn && (
+                <Link href="/portfolio" className="hidden sm:block text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">
+                  Portföy
+                </Link>
+              )}
+              <Link href="/leaderboard" className="hidden sm:block text-sm font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-1.5 rounded-lg hover:bg-[var(--surface-2)]">
+                Sıralama
               </Link>
               {loggedIn ? (
                 <Link href="/markets" className="bg-[var(--rise)] text-white text-sm font-semibold px-4 py-1.5 rounded-lg hover:brightness-110 transition-all">
@@ -121,8 +129,8 @@ export default async function LandingPage() {
         </nav>
 
         {/* Hero */}
-        <section className="max-w-7xl mx-auto px-4 pt-16 pb-10">
-          <div className="max-w-2xl mb-14">
+        <section className="max-w-7xl mx-auto px-4 pt-16 pb-14">
+          <div className="max-w-2xl">
             <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-5">
               Türkiye&apos;nin tahmin pazarı
             </div>
@@ -154,8 +162,11 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          {/* Stats bar */}
-          <div className="flex gap-10 py-6 border-y border-[var(--border-light)] mb-12 flex-wrap">
+        </section>
+
+        {/* Stats bandı — beyaz şerit, üst/alt çizgili */}
+        <div className="border-y border-[var(--border)] bg-[var(--surface)]">
+          <div className="max-w-7xl mx-auto px-4 flex gap-10 py-6 flex-wrap">
             {[
               { val: '10K+', label: 'Aktif tahmin' },
               { val: '◈4.8M', label: 'İşlem hacmi' },
@@ -168,11 +179,17 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Live markets preview */}
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-xl font-bold text-[var(--ink)]">Aktif Marketler</h2>
-            <Link href="/markets" className="text-sm font-medium text-[var(--rise)] hover:underline">
+        {/* Marketler bandı — koyulaştırılmış zemin, kartlar öne çıkar */}
+        <section className="bg-[var(--surface-2)] border-b border-[var(--border)]">
+          <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-1.5">Şu an oynanıyor</div>
+              <h2 className="font-display text-2xl font-bold text-[var(--ink)]">Aktif Marketler</h2>
+            </div>
+            <Link href="/markets" className="text-sm font-semibold text-[var(--rise)] hover:underline">
               Tümünü gör →
             </Link>
           </div>
@@ -181,9 +198,13 @@ export default async function LandingPage() {
               <MarketCard key={market.id} market={market} href={cardHref} />
             ))}
           </div>
+          </div>
 
-          {/* CTA — tabela paneli */}
-          <div className="mt-14 tabela rounded-2xl px-8 py-10 text-center">
+        </section>
+
+        {/* CTA bandı */}
+        <section className="max-w-7xl mx-auto px-4 py-14">
+          <div className="tabela rounded-2xl px-8 py-10 text-center">
             <h3 className="font-display text-2xl font-bold text-white mb-2">Var mısın?</h3>
             <p className="text-sm text-[var(--board-text)] mb-6">
               {loggedIn

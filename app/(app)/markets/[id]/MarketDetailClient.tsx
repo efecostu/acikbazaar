@@ -13,6 +13,7 @@ import { AIFavorites } from '@/components/AIFavorites';
 import { ProbChart, ProbPoint } from '@/components/ProbChart';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { celebrate } from '@/lib/confetti';
+import { Countdown } from '@/components/Countdown';
 
 interface BetWithOption extends Bet {
   market_options?: { label_tr: string; label_en: string } | null;
@@ -147,8 +148,11 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
               )}
               <span className="text-xs text-[var(--ink-3)]">{market.region === 'turkey' ? '🇹🇷' : '🌐'}</span>
             </div>
-            <span className={`font-data text-xs ${daysUntil(market.ends_at) <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
-              {t('Bitiş', 'Ends')}: {formatDate(market.ends_at, lang)}
+            <span className="flex items-center gap-2">
+              <Countdown endsAt={market.ends_at} />
+              <span className={`font-data text-xs ${daysUntil(market.ends_at) <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
+                {t('Bitiş', 'Ends')}: {formatDate(market.ends_at, lang)}
+              </span>
             </span>
           </div>
 

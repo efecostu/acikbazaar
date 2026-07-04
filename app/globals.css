@@ -210,6 +210,23 @@ main > * {
   animation: caret-blink 0.9s step-end infinite;
 }
 
+/* Kayar bant (marquee) — borsa ekranı gibi kesintisiz akar, hover'da durur */
+.marquee { overflow: hidden; }
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
 /* Canlı nokta */
 @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .live-dot {
