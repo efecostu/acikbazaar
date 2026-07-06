@@ -17,6 +17,15 @@ export async function POST(req: Request) {
   const today = new Date().toISOString().slice(0, 10);
   const currentYear = new Date().getFullYear();
 
+  // Mevcut aktif marketler — kopya üretimi engellemek için prompt'a eklenir
+  const adminForDedup = await createAdminClient();
+  const { data: existing } = await adminForDedup
+    .from('markets')
+    .select('title_tr')
+    .eq('status', 'active')
+    .limit(50);
+  const existingList = (existing ?? []).map((m) => `- ${m.title_tr}`).join('\n');
+
   // Use web search so Claude knows what's actually happening right now
   const response = await client.beta.messages.create({
     model: 'claude-sonnet-4-6',
@@ -41,6 +50,9 @@ Category guide:
 - world: International events outside Turkey
 - entertainment: Music, film, TV — Turkish pop culture & international
 - weather: Extreme weather forecasts, seasonal records
+
+These markets ALREADY EXIST — do NOT create anything that duplicates or closely overlaps them:
+${existingList || '(none)'}
 
 Rules:
 - CRITICAL: today is ${today}, the current year is ${currentYear}. Never create a market about
