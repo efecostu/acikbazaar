@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { MarketCard } from '@/components/MarketCard';
 import { HeroTicker } from '@/components/HeroTicker';
+import DotField from '@/components/DotField';
 import { LangProvider } from '@/contexts/LangContext';
 import type { Market } from '@/types';
 
@@ -129,7 +130,23 @@ export default async function LandingPage() {
         </nav>
 
         {/* Hero */}
-        <section className="max-w-7xl mx-auto px-4 pt-16 pb-14">
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <DotField
+              dotRadius={1.4}
+              dotSpacing={16}
+              cursorRadius={220}
+              bulgeStrength={46}
+              glowRadius={140}
+              sparkle
+              gradientFrom="rgba(47, 213, 136, 0.30)"
+              gradientTo="rgba(11, 160, 95, 0.14)"
+              glowColor="#2FD588"
+            />
+            {/* Alt kenarda içerikle yumuşak kaynaşma */}
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-[var(--paper)]" />
+          </div>
+          <div className="relative max-w-7xl mx-auto px-4 pt-16 pb-14">
           <div className="max-w-2xl">
             <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-5">
               Türkiye&apos;nin tahmin pazarı
@@ -161,7 +178,7 @@ export default async function LandingPage() {
               )}
             </div>
           </div>
-
+          </div>
         </section>
 
         {/* Stats bandı — beyaz şerit, üst/alt çizgili */}
