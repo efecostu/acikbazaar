@@ -49,6 +49,22 @@ curl -H "x-admin-secret: $ADMIN_SECRET" -X POST -H 'Content-Type: application/js
   -d '{"topUp":true}' https://acikbazaar.com/api/ai/generate
 ```
 
+## Botlar (sürekli canlılık)
+
+Dört bot (`is_bot = true`) `/api/bots/tick` ile bahis yapar: her tick 2-4 bahis, 12 dk throttle, 02:00-07:00 TRT arası uyur, her bot+market ikilisi için sabit "kanaat" (aynı bot aynı markette tutarlı), az bahis alan ve yakında kapanacak marketlere öncelik. Tetikleyiciler:
+
+- Sayfa ziyaretleri: landing, market listesi ve market detayı yanıt sonrası tick'i dürter (`lib/botTrigger.ts`).
+- Harici zamanlayıcı (önerilir, Hobby planda 3. cron yok): [cron-job.org](https://cron-job.org) gibi ücretsiz bir servisten her 15 dakikada `GET https://acikbazaar.com/api/bots/tick` çağır, header: `x-admin-secret: <ADMIN_SECRET>`.
+- Elle patlama: `?force=1&burst=25` ile throttle'ı atlayıp 25 bahis üretir (yeni market seti yükledikten sonra hacim kazandırmak için).
+
+```bash
+curl -H "x-admin-secret: $ADMIN_SECRET" "https://acikbazaar.com/api/bots/tick?force=1&burst=25"
+```
+
+## Market seti (AI olmadan)
+
+`supabase-seed-markets-2026-09.sql` elle küratörlü, güncel gündeme dayalı 39 market içerir (spor, ekonomi, siyaset, teknoloji, eğlence, hava, dünya). İdempotenttir; SQL Editor'da çalıştırıp ardından bot burst'ü tetikleyin. Anthropic anahtarı çalışınca cron bu seti otomatik üretimle tamamlar.
+
 ## Market yaşam döngüsü
 
 `active` → (ends_at geçti) → cron çözer → `resolved` (bahisler ödenir, `resolution_note` yazılır)

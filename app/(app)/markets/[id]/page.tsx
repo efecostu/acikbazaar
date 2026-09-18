@@ -28,6 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MarketDetailPage({ params }: Props) {
   const { id } = await params;
+  const { nudgeBots } = await import('@/lib/botTrigger');
+  nudgeBots();
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();

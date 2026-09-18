@@ -26,6 +26,7 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
   const [category, setCategory] = useState<MarketCategory | 'all' | 'foryou'>(hasInterests ? 'foryou' : 'all');
   const [region, setRegion] = useState<MarketRegion | 'all'>('all');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<'new' | 'ending' | 'volume'>('new');
 
   const isAwaiting = (m: Market) =>
     m.status === 'closed' || (m.status === 'active' && new Date(m.ends_at).getTime() <= Date.now());
@@ -43,8 +44,19 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
     return true;
   });
 
-  const open = filtered.filter((m) => !isAwaiting(m));
-  const awaiting = filtered.filter(isAwaiting);
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'ending') return new Date(a.ends_at).getTime() - new Date(b.ends_at).getTime();
+    if (sort === 'volume') return b.total_volume - a.total_volume;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+  const open = sorted.filter((m) => !isAwaiting(m));
+  const awaiting = sorted.filter(isAwaiting);
+
+  const SORTS: { key: typeof sort; label: string }[] = [
+    { key: 'new', label: t('Yeni', 'New') },
+    { key: 'ending', label: t('Yakında kapanıyor', 'Ending soon') },
+    { key: 'volume', label: t('En hacimli', 'Top volume') },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,6 +113,18 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
               {cat === 'all' ? t('Tümü', 'All') : (
                 <span className="inline-flex items-center gap-1.5"><CategoryIcon category={cat} size={13} />{categoryLabel(cat, lang)}</span>
               )}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5 sm:ml-auto">
+          {SORTS.map((o) => (
+            <button key={o.key} onClick={() => setSort(o.key)}
+              className={cn('px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors',
+                sort === o.key
+                  ? 'border-[var(--ink)] text-[var(--ink)] bg-[var(--surface-2)]'
+                  : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
+              )}>
+              {o.label}
             </button>
           ))}
         </div>

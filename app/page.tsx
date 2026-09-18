@@ -76,6 +76,8 @@ export default async function LandingPage() {
   let stats = { bets: 0, volume: 0, users: 0, active: 0 };
 
   if (!isDemoMode) {
+    const { nudgeBots } = await import('@/lib/botTrigger');
+    nudgeBots();
     const supabase = await createClient();
     const nowIso = new Date().toISOString();
     const [{ data: { user } }, { data: liveMarkets }, { data: rpcStats }, { count: betCount }, { count: userCount }] = await Promise.all([
