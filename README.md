@@ -28,9 +28,10 @@ Supabase SQL Editor'da sırayla çalıştır (hepsi idempotent, tekrar çalışt
 6. `supabase-migration-6.sql` — Realtime yayını, public bahis akışı
 7. `supabase-hotfix-register.sql` — kayıt trigger'ı (her zaman RETURN NEW)
 8. `supabase-migration-7.sql` — çözüm gerekçesi, "sonuç bekleniyor" durumu, indeksler, yorum rate-limit, `platform_stats()`
+9. `supabase-migration-8.sql` — haftalık sıralama görünümü (`leaderboard_weekly`), davet sistemi (`?ref=kullaniciadi`, iki tarafa ◈5.000)
 
 Supabase → Authentication → URL Configuration:
-- **Site URL:** `https://acikbazaar.com`
+- **Site URL:** `https://acikbazaar.com` (localhost bırakılırsa doğrulama e-postaları localhost'a gider)
 - **Redirect URLs:** `https://acikbazaar.com/auth/callback`, `http://localhost:3000/auth/callback`
 
 ## Otomasyon (Vercel Cron — `vercel.json`)
@@ -67,6 +68,8 @@ lib/settle.ts      tek çözüm/ödeme fonksiyonu
 lib/resolve.ts     günlük tarama (due + early + top-up)
 lib/generate.ts    Claude ile market üretimi + top-up
 lib/notify.ts      kazanç e-postaları
+lib/badges.ts      profil rozetleri (DB'siz, bahis geçmişinden hesaplanır)
+components/ShareBar.tsx  X / WhatsApp / Telegram / kopyala paylaşım şeridi
 proxy.ts           Supabase oturum yenileme (Next 16'da middleware'in adı)
 ```
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -18,6 +18,13 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ref, setRef] = useState('');
+
+  // Davet linki: /register?ref=kullaniciadi
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get('ref');
+    if (r && /^[a-z0-9_]{3,20}$/.test(r.toLowerCase())) setRef(r.toLowerCase());
+  }, []);
 
   // Supabase hata mesajlarını anlaşılır Türkçeye çevir
   const ERROR_MAP: [string, string][] = [
@@ -46,7 +53,7 @@ export default function RegisterPage() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email, password,
       options: {
-        data: { username },
+        data: { username, ...(ref ? { ref } : {}) },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
       },
     });
@@ -94,7 +101,10 @@ export default function RegisterPage() {
 
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
           <h2 className="font-display text-lg font-bold text-[var(--ink)] mb-1">Kayıt Ol</h2>
-          <p className="text-sm text-[var(--ink-2)] mb-5">Başlangıç kredisi: <span className="font-data font-semibold text-[var(--rise)]">◈100.000</span></p>
+          <p className="text-sm text-[var(--ink-2)] mb-5">
+            Başlangıç kredisi: <span className="font-data font-semibold text-[var(--rise)]">◈100.000</span>
+            {ref && <span className="block mt-1 text-xs text-[var(--copper)]">🤝 @{ref} seni davet etti — kayıtta ◈5.000 bonus.</span>}
+          </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input id="username" type="text" label="Kullanıcı Adı" placeholder="tahmincu42"

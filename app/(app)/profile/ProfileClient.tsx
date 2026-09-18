@@ -3,6 +3,8 @@
 import { Profile, Bet } from '@/types';
 import { useLang } from '@/contexts/LangContext';
 import { formatCredits, formatDate } from '@/lib/utils';
+import { computeBadges } from '@/lib/badges';
+import { ShareBar } from '@/components/ShareBar';
 
 interface Props { profile: Profile | null; email: string; bets: Bet[] }
 
@@ -13,6 +15,8 @@ export function ProfileClient({ profile, email, bets }: Props) {
   const wonBets = bets.filter((b) => b.status === 'won');
   const lostBets = bets.filter((b) => b.status === 'lost');
   const totalProfit = wonBets.reduce((s, b) => s + b.potential_payout - b.amount, 0) - lostBets.reduce((s, b) => s + b.amount, 0);
+  const badges = computeBadges(profile, bets);
+  const earned = badges.filter((b) => b.earned);
 
   const stats = [
     { label: t('Bakiye', 'Balance'), value: `◈${formatCredits(profile.balance)}`, accent: true },
@@ -24,17 +28,20 @@ export function ProfileClient({ profile, email, bets }: Props) {
   ];
 
   return (
-    <div className="flex flex-col gap-5 max-w-xl">
+    <div className="flex flex-col gap-5 max-w-2xl">
       {/* Profile card */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 transition-colors duration-200">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-[var(--rise-soft)] border border-[var(--rise-line)] flex items-center justify-center text-2xl font-bold text-[var(--rise)]">
             {profile.username[0].toUpperCase()}
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-lg font-bold text-[var(--ink)]">@{profile.username}</p>
-            <p className="text-sm text-[var(--ink-2)]">{email}</p>
-            <p className="text-xs text-[var(--ink-3)] mt-0.5">{t('Katılım', 'Joined')}: {formatDate(profile.created_at, lang)}</p>
+            <p className="text-sm text-[var(--ink-2)] truncate">{email}</p>
+            <p className="text-xs text-[var(--ink-3)] mt-0.5">
+              {t('Katılım', 'Joined')}: {formatDate(profile.created_at, lang)}
+              {(profile.streak_count ?? 0) > 0 && <> · 🔥 {profile.streak_count} {t('gün seri', 'day streak')}</>}
+            </p>
           </div>
         </div>
       </div>
@@ -50,6 +57,52 @@ export function ProfileClient({ profile, email, bets }: Props) {
             }`}>{s.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Davet */}
+      <div className="tabela rounded-2xl p-5 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="tabela-label mb-1">{t('arkadaşını davet et', 'invite a friend')}</div>
+            <p className="text-sm text-white">
+              {t('Her davet için ikinize de ◈5.000 bonus.', 'You both get ◈5,000 for every invite.')}
+              {(profile.referral_count ?? 0) > 0 && (
+                <span className="tabela-rise ml-2">{profile.referral_count} {t('davet', 'invited')}</span>
+              )}
+            </p>
+          </div>
+          <code className="font-data text-xs px-2.5 py-1.5 rounded-lg" style={{ background: 'var(--board-line)', color: 'var(--board-text)' }}>
+            acikbazaar.com/register?ref={profile.username}
+          </code>
+        </div>
+        <ShareBar
+          compact
+          path={`/register?ref=${profile.username}`}
+          text={t('AçıkBazaar\'da tahmin yarışına katıl — ücretsiz, gerçek para yok. Bu linkle kayıt olursan ◈5.000 bonus kredi alırsın:', 'Join me on AçıkBazaar — free prediction markets, no real money. Sign up with this link for ◈5,000 bonus credits:')}
+        />
+      </div>
+
+      {/* Rozetler */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 transition-colors duration-200">
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="font-display text-base font-bold text-[var(--ink)]">{t('Rozetler', 'Badges')}</h2>
+          <span className="font-data text-xs text-[var(--ink-3)]">{earned.length} / {badges.length}</span>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {badges.map((b) => (
+            <div key={b.id} title={lang === 'tr' ? b.descTr : b.descEn}
+              className={`rounded-xl border p-3 text-center transition-colors ${
+                b.earned
+                  ? 'border-[var(--copper-line)] bg-[var(--copper-soft)]'
+                  : 'border-[var(--border-light)] bg-[var(--surface-2)] opacity-45 grayscale'
+              }`}>
+              <div className="text-2xl leading-none">{b.icon}</div>
+              <div className={`text-[11px] font-semibold mt-1.5 leading-tight ${b.earned ? 'text-[var(--copper)]' : 'text-[var(--ink-3)]'}`}>
+                {lang === 'tr' ? b.tr : b.en}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

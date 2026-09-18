@@ -1,23 +1,49 @@
 'use client';
 
+import { useState } from 'react';
 import { LeaderboardEntry } from '@/types';
 import { useLang } from '@/contexts/LangContext';
 import { formatCredits } from '@/lib/utils';
 
-interface Props { entries: LeaderboardEntry[] }
+interface Props { entries: LeaderboardEntry[]; weekly?: LeaderboardEntry[] }
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 // Header ve satırlar AYNI kolon şablonunu kullanır — hiza asla kaymaz
 const COLS = 'grid-cols-[2.5rem_minmax(0,1fr)_5.5rem] sm:grid-cols-[3rem_minmax(0,1fr)_7rem_4.5rem_5rem_7rem]';
 
-export function LeaderboardClient({ entries }: Props) {
+export function LeaderboardClient({ entries: allTime, weekly = [] }: Props) {
   const { t } = useLang();
+  const [period, setPeriod] = useState<'week' | 'all'>(weekly.length > 0 ? 'week' : 'all');
+  const entries = period === 'week' ? weekly : allTime;
+
+  const tabs: { key: 'week' | 'all'; label: string }[] = [
+    { key: 'week', label: t('Bu hafta', 'This week') },
+    { key: 'all', label: t('Tüm zamanlar', 'All time') },
+  ];
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
-      <div>
-        <h1 className="font-display text-[26px] font-bold text-[var(--ink)]">{t('Sıralama', 'Leaderboard')}</h1>
-        <p className="text-sm text-[var(--ink-2)] mt-1">{t('Kâra göre sıralı top 100', 'Top 100 by profit')}</p>
+      <div className="flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-[26px] font-bold text-[var(--ink)]">{t('Sıralama', 'Leaderboard')}</h1>
+          <p className="text-sm text-[var(--ink-2)] mt-1">
+            {period === 'week'
+              ? t('Son 7 günde kapanan bahislerden kâr', 'Profit from bets settled in the last 7 days')
+              : t('Kâra göre sıralı top 100', 'Top 100 by profit')}
+          </p>
+        </div>
+        <div className="flex gap-1.5">
+          {tabs.map((tab) => (
+            <button key={tab.key} onClick={() => setPeriod(tab.key)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                period === tab.key
+                  ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
+                  : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
+              }`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden transition-colors duration-200">
@@ -32,7 +58,11 @@ export function LeaderboardClient({ entries }: Props) {
         </div>
 
         {entries.length === 0 ? (
-          <div className="text-center py-16 text-[var(--ink-3)] text-sm">{t('Henüz veri yok.', 'No data yet.')}</div>
+          <div className="text-center py-16 text-[var(--ink-3)] text-sm">
+            {period === 'week'
+              ? t('Bu hafta henüz kapanan bahis yok.', 'No bets settled this week yet.')
+              : t('Henüz veri yok.', 'No data yet.')}
+          </div>
         ) : (
           entries.map((entry, i) => (
             <div key={entry.username}

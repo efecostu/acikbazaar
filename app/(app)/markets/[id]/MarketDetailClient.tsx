@@ -14,6 +14,7 @@ import { ProbChart, ProbPoint } from '@/components/ProbChart';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { celebrate } from '@/lib/confetti';
 import { Countdown } from '@/components/Countdown';
+import { ShareBar } from '@/components/ShareBar';
 
 interface BetWithOption extends Bet {
   market_options?: { label_tr: string; label_en: string } | null;
@@ -161,6 +162,10 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
 
           <h1 className="font-display text-[22px] font-bold text-[var(--ink)] leading-snug">{title}</h1>
           {description && <p className="text-sm text-[var(--ink-2)] leading-relaxed">{description}</p>}
+          <ShareBar
+            path={`/markets/${market.id}`}
+            text={t(`"${market.title_tr}" — topluluk %${yesPct} EVET diyor. Sen ne dersin?`, `"${market.title_en}" — the crowd says ${yesPct}% YES. What's your call?`)}
+          />
         </div>
 
         {/* Kotasyon panosu */}

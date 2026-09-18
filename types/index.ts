@@ -15,6 +15,8 @@ export interface Profile {
   last_bet_date?: string | null;
   interests?: string[] | null;
   is_bot?: boolean;
+  referred_by?: string | null;
+  referral_count?: number;
   created_at: string;
 }
 
