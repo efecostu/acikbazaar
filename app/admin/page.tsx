@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
         lastResolvedAt={lastResolvedAt}
         cronSecretSet={!!process.env.CRON_SECRET}
         resendSet={!!process.env.RESEND_API_KEY}
-        anthropicSet={!!process.env.ANTHROPIC_API_KEY}
+        anthropicSet={!!process.env.ANTHROPIC_API_KEY || (!!process.env.SERPER_API_KEY && !!process.env.LLM_API_KEY)}
         appUrl={process.env.NEXT_PUBLIC_APP_URL ?? null}
       />
 

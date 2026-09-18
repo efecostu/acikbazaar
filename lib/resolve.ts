@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { settleMarket, type WinInfo } from '@/lib/settle';
 import { sendWinEmails } from '@/lib/notify';
 import { topUpMarkets } from '@/lib/generate';
+import { cheapResearchAvailable, gatherEvidence, answerWithEvidence } from '@/lib/research';
 
 type MarketRow = {
   id: string; title_tr: string; title_en: string;
@@ -25,7 +26,7 @@ export type SweepResult = {
 /** Anthropic faturalama/anahtar hatası — tekrar denemek anlamsız, taramayı erken bitir. */
 export function isBillingError(err: unknown): boolean {
   const msg = String(err);
-  return /credit balance|billing|invalid x-api-key|authentication_error|ANTHROPIC_API_KEY missing/i.test(msg);
+  return /credit balance|billing|invalid x-api-key|authentication_error|ANTHROPIC_API_KEY missing|LLM 402|LLM 401|insufficient credits|serper 40[13]/i.test(msg);
 }
 
 /**
@@ -66,7 +67,8 @@ function extractJson(text: string): unknown {
  *  (c) açık market sayısını hedefe tamamla (top-up)
  */
 export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean; forceEarly?: boolean } = {}): Promise<SweepResult> {
-  const client = new Anthropic();
+  const cheap = cheapResearchAvailable();
+  const client = cheap ? null : new Anthropic();
   const nowIso = new Date().toISOString();
   const currentYear = new Date().getFullYear();
 
@@ -130,20 +132,25 @@ Search for recent news and facts, then respond with ONLY a JSON object (no other
 outcome: true = YES happened, false = NO. If the deadline passed and the event did NOT happen, outcome is false.
 If you cannot determine with confidence >= 0.7, set outcome to null.`;
 
-      const response = await client.beta.messages.create({
-        model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        betas: ['web-search-2025-03-05'],
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }], // maliyet kapağı: market başına en fazla 3 arama
-        messages: [{ role: 'user', content: prompt }],
-      });
-
       type DueVerdict = { outcome?: boolean | null; winning_index?: number | null; confidence: number; reasoning: string };
-      const textContent = response.content.findLast((c) => c.type === 'text');
-      let v: DueVerdict | null = null;
-      if (textContent?.type === 'text') {
-        try { v = extractJson(textContent.text) as DueVerdict; } catch { v = null; }
+      let verdictText = '';
+      if (cheap) {
+        // Serper: 2 sorgu (TR + EN), son 1 ay → ucuz model karar verir
+        const ev = await gatherEvidence([market.title_tr, market.title_en], { recent: 'm', perQuery: 6, maxQueries: 2 });
+        verdictText = await answerWithEvidence(prompt.replace('Search for recent news', 'Use the search results below'), ev.text, { maxTokens: 400 });
+      } else {
+        const response = await client!.beta.messages.create({
+          model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          betas: ['web-search-2025-03-05'],
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }], // maliyet kapağı: market başına en fazla 3 arama
+          messages: [{ role: 'user', content: prompt }],
+        });
+        const textContent = response.content.findLast((c) => c.type === 'text');
+        verdictText = textContent?.type === 'text' ? textContent.text : '';
       }
+      let v: DueVerdict | null = null;
+      try { v = extractJson(verdictText) as DueVerdict; } catch { v = null; }
 
       const decided = v !== null && (isMulti
         ? v.winning_index !== null && v.winning_index !== undefined && options![v.winning_index] !== undefined
@@ -217,19 +224,24 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
 - "winning_index": option index for multi-option markets, null otherwise
 - Be conservative: when in doubt, leave the market out. Return [] if none are decided.`;
 
-      // Erken çözüm hatası pahalı (ödeme dağıtılır) → bu tek çağrıda daha güçlü model kullan
-      const response = await client.beta.messages.create({
-        model: process.env.ANTHROPIC_MODEL_STRONG ?? 'claude-sonnet-4-6',
-        max_tokens: 2000,
-        betas: ['web-search-2025-03-05'],
-        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }], // maliyet kapağı: erken tarama en fazla 8 arama
-        messages: [{ role: 'user', content: earlyPrompt }],
-      });
-
-      const textContent = response.content.findLast((c) => c.type === 'text');
-      const verdicts = textContent?.type === 'text'
-        ? (extractJson(textContent.text) as { index: number; outcome: boolean | null; winning_index: number | null; confidence: number; reasoning: string }[])
-        : [];
+      let earlyText = '';
+      if (cheap) {
+        // Her market için 1 Serper sorgusu (haftada 1 gün × ~45 market = ayda ~200 arama, ücretsiz kotada)
+        const ev = await gatherEvidence(openWithOptions.map(({ m }) => m.title_tr), { recent: 'm', perQuery: 4, maxQueries: 60 });
+        earlyText = await answerWithEvidence(earlyPrompt.replace('Use web search to verify.', 'Use ONLY the search results below to verify.'), ev.text, { maxTokens: 1500 });
+      } else {
+        // Erken çözüm hatası pahalı (ödeme dağıtılır) → bu tek çağrıda daha güçlü model kullan
+        const response = await client!.beta.messages.create({
+          model: process.env.ANTHROPIC_MODEL_STRONG ?? 'claude-sonnet-4-6',
+          max_tokens: 2000,
+          betas: ['web-search-2025-03-05'],
+          tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }], // maliyet kapağı: erken tarama en fazla 8 arama
+          messages: [{ role: 'user', content: earlyPrompt }],
+        });
+        const textContent = response.content.findLast((c) => c.type === 'text');
+        earlyText = textContent?.type === 'text' ? textContent.text : '[]';
+      }
+      const verdicts = extractJson(earlyText) as { index: number; outcome: boolean | null; winning_index: number | null; confidence: number; reasoning: string }[];
 
       for (const v of Array.isArray(verdicts) ? verdicts : []) {
         const entry = openWithOptions[v.index];

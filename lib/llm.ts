@@ -13,7 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
  *   LLM_API_KEY=sk-or-...
  *   LLM_MODEL=google/gemini-2.5-flash-lite      (~0,00005 $/yorum; deepseek/deepseek-chat-v3.1 daha "insan", 4 kat pahalı)
  */
-export interface ChatOpts { maxTokens?: number; temperature?: number; system?: string }
+export interface ChatOpts { maxTokens?: number; temperature?: number; system?: string; model?: string }
 
 export function llmProvider(): 'openai-compatible' | 'anthropic' | null {
   if (process.env.LLM_BASE_URL && process.env.LLM_API_KEY) return 'openai-compatible';
@@ -32,7 +32,7 @@ export async function chat(prompt: string, opts: ChatOpts = {}): Promise<string>
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.LLM_API_KEY}`, 'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://acikbazaar.com', 'X-Title': 'AcikBazaar' },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL ?? 'google/gemini-2.5-flash-lite',
+        model: opts.model ?? process.env.LLM_MODEL ?? 'google/gemini-2.5-flash-lite',
         max_tokens: maxTokens,
         temperature,
         messages: [
@@ -50,7 +50,7 @@ export async function chat(prompt: string, opts: ChatOpts = {}): Promise<string>
   if (provider === 'anthropic') {
     const client = new Anthropic();
     const response = await client.messages.create({
-      model: process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6',
+      model: opts.model ?? process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
       max_tokens: maxTokens,
       temperature,
       ...(opts.system ? { system: opts.system } : {}),

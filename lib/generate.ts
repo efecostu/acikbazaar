@@ -1,11 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MarketCategory, MarketRegion } from '@/types';
+import { cheapResearchAvailable, gatherEvidence, answerWithEvidence } from '@/lib/research';
 
 export const CATEGORIES: MarketCategory[] = ['politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 
 /** Sitede her zaman en az bu kadar açık market olsun (cron top-up hedefi). */
 export const TARGET_ACTIVE_MARKETS = 16;
+
+/** Ucuz yol için kategori başına Google sorguları (Türkiye gündemi). */
+const SEARCH_QUERIES: Record<string, string[]> = {
+  politics: ['Türkiye siyaset gündem', 'TBMM Meclis karar', 'seçim anket'],
+  economy: ['TCMB faiz kararı', 'dolar TL kur beklenti', 'BIST 100 enflasyon TÜİK'],
+  sports: ['Süper Lig fikstür maç', 'Galatasaray Fenerbahçe Beşiktaş transfer', 'A Milli Takım maç'],
+  tech: ['Bitcoin fiyat', 'yapay zeka Türkiye', 'Togg Trendyol teknoloji haber'],
+  world: ['dünya gündem', 'ABD Avrupa haber', 'Orta Doğu gelişme'],
+  entertainment: ['dizi reyting yeni sezon', 'Netflix Türkiye', 'Türkiye gişe film konser'],
+  weather: ['Meteoroloji uyarı hava durumu', 'İstanbul kar yağmur tahmin', 'sıcaklık rekor'],
+};
 
 export type GeneratedMarket = {
   title_en: string;
@@ -47,8 +59,9 @@ export async function generateMarkets(
   const category = opts.category ?? 'economy';
   const count = Math.max(1, Math.min(opts.count ?? 3, 5));
 
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing');
-  const client = new Anthropic();
+  const cheap = cheapResearchAvailable();
+  if (!cheap && !process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing (or set SERPER_API_KEY + LLM_*)');
+  const client = cheap ? null : new Anthropic();
 
   const today = new Date().toISOString().slice(0, 10);
   const currentYear = new Date().getFullYear();
@@ -61,14 +74,7 @@ export async function generateMarkets(
     .limit(60);
   const existingList = (existing ?? []).map((m) => `- ${m.title_tr}`).join('\n');
 
-  const response = await client.beta.messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
-    max_tokens: 3000,
-    betas: ['web-search-2025-03-05'],
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }], // maliyet kapağı
-    messages: [{
-      role: 'user',
-      content: `Today is ${today}. You are generating prediction markets for AçıkBazaar (free simulation, no real money).
+  const genPrompt = `Today is ${today}. You are generating prediction markets for AçıkBazaar (free simulation, no real money).
 
 STEP 1 — Search the web for recent news in: category="${category}", region="${region}".
 Find events that are UPCOMING or IN PROGRESS — things that have NOT been decided yet.
@@ -114,12 +120,24 @@ Return ONLY a valid JSON array (no markdown, no explanation):
     "ends_at": "${currentYear}-12-31",
     "tag": null
   }
-]`,
-    }],
-  });
+]`;
 
-  const textBlock = response.content.findLast((c) => c.type === 'text');
-  const text = textBlock?.type === 'text' ? textBlock.text : '[]';
+  let text = '[]';
+  if (cheap) {
+    const q = SEARCH_QUERIES[category] ?? [category];
+    const ev = await gatherEvidence(region === 'turkey' ? q.map((x) => `${x} son dakika`) : q.map((x) => `${x} news`), { recent: 'w', perQuery: 8, maxQueries: 3 });
+    text = await answerWithEvidence(genPrompt.replace('STEP 1 — Search the web for', 'STEP 1 — Read the search results below about'), ev.text, { maxTokens: 3000 });
+  } else {
+    const response = await client!.beta.messages.create({
+      model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
+      max_tokens: 3000,
+      betas: ['web-search-2025-03-05'],
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }], // maliyet kapağı
+      messages: [{ role: 'user', content: genPrompt }],
+    });
+    const textBlock = response.content.findLast((c) => c.type === 'text');
+    text = textBlock?.type === 'text' ? textBlock.text : '[]';
+  }
 
   let candidates: Record<string, unknown>[];
   try {

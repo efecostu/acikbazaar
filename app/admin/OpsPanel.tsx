@@ -27,7 +27,7 @@ export function OpsPanel({ overdue, awaiting, openCount, target, lastResolvedAt,
 
   const checks: { ok: boolean; label: string; hint: string }[] = [
     { ok: cronSecretSet, label: 'CRON_SECRET', hint: 'Vercel env\'de yoksa günlük cron 401 alır ve hiçbir market çözülmez.' },
-    { ok: anthropicSet, label: 'ANTHROPIC_API_KEY', hint: 'Market üretimi ve otomatik çözüm için gerekli (web araması). Bot yorumları LLM_BASE_URL ile ucuz bir modelden de çalışır.' },
+    { ok: anthropicSet, label: 'Araştırma: SERPER_API_KEY + LLM_* (ucuz yol) veya ANTHROPIC_API_KEY', hint: 'Market üretimi ve otomatik çözüm. Serper + OpenRouter varsa Anthropic hiç kullanılmaz.' },
     { ok: resendSet, label: 'RESEND_API_KEY', hint: 'Kazanç e-postaları ve günlük rapor için gerekli.' },
     { ok: !!appUrl && appUrl.startsWith('https://'), label: 'NEXT_PUBLIC_APP_URL', hint: 'Bot tetikleyici ve OG linkleri bu adresi kullanır.' },
     { ok: overdue === 0, label: `Süresi dolmuş aktif market: ${overdue}`, hint: 'Sıfır olmalı. Değilse cron çalışmıyor → "Şimdi çöz".' },
