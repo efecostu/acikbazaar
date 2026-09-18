@@ -201,27 +201,18 @@ export async function approveSuggestion(suggestionId: string) {
     .single();
   if (!s || s.status !== 'pending') return { error: 'Öneri bulunamadı veya zaten işlenmiş.' };
 
-  // Claude: EN çeviri + gerçekçi olasılık tahmini (hızlı, web search'süz)
+  // EN çeviri + gerçekçi olasılık tahmini (ucuz model; LLM_* → Anthropic → hiçbiri yoksa TR başlık ve %50)
   let title_en = s.title_tr;
   let yes_prob = 0.5;
   try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const client = new Anthropic();
-    const resp = await client.messages.create({
-      model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `Turkish prediction-market question. Translate to English (max 12 words, punchy) and estimate a realistic YES probability between 0.05 and 0.95.
+    const { chat } = await import('@/lib/llm');
+    const text = await chat(`Turkish prediction-market question. Translate to English (max 12 words, punchy) and estimate a realistic YES probability between 0.05 and 0.95.
 Return ONLY JSON: {"title_en":"...","yes_prob":0.55}
 
 Question: ${s.title_tr}
 ${s.details ? `Details: ${s.details}` : ''}
 Resolution date: ${s.ends_at}
-Today: ${new Date().toISOString().slice(0, 10)}`,
-      }],
-    });
-    const text = resp.content[0]?.type === 'text' ? resp.content[0].text : '';
+Today: ${new Date().toISOString().slice(0, 10)}`, { maxTokens: 300, temperature: 0.3 });
     const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
     if (parsed.title_en) title_en = parsed.title_en;
     const p = Number(parsed.yes_prob);
