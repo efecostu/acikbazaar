@@ -51,6 +51,7 @@ export function Header({ balance, username, streak = 0 }: HeaderProps) {
     { href: '/markets', label: t('Marketler', 'Markets') },
     { href: '/portfolio', label: t('Portföy', 'Portfolio') },
     { href: '/leaderboard', label: t('Sıralama', 'Leaderboard') },
+    { href: '/activity', label: t('Akış', 'Activity') },
   ];
 
   async function handleSignOut() {
