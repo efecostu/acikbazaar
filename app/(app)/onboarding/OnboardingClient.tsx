@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
-import { categoryLabel, categoryEmoji, cn } from '@/lib/utils';
+import { categoryLabel, categoryColor, cn } from '@/lib/utils';
+import { CategoryIcon } from '@/components/CategoryIcon';
 
 const CATEGORIES = ['sports', 'economy', 'politics', 'tech', 'world', 'entertainment', 'weather'];
 
@@ -59,7 +60,9 @@ export function OnboardingClient({ username }: Props) {
                   : 'border-[var(--border)] bg-[var(--surface)] hover:border-[var(--ink-3)]'
               )}
             >
-              <span className="text-2xl">{categoryEmoji(cat)}</span>
+              <span className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${categoryColor(cat)}18`, color: categoryColor(cat) }}>
+                <CategoryIcon category={cat} size={20} />
+              </span>
               <span className={cn('text-sm font-semibold', active ? 'text-[var(--rise)]' : 'text-[var(--ink)]')}>
                 {categoryLabel(cat, lang)}
               </span>

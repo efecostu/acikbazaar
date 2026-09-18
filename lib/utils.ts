@@ -49,6 +49,17 @@ export function categoryLabel(category: string, lang: 'tr' | 'en'): string {
   return map[category]?.[lang] ?? category;
 }
 
+/** AI'nın ürettiği serbest tag değerlerini ("hot", "trending", "🔥") okunur etikete çevirir. */
+export function tagLabel(tag: string | null | undefined, lang: 'tr' | 'en'): string | null {
+  if (!tag) return null;
+  const key = tag.trim().toLowerCase();
+  if (key === 'hot' || key === '🔥' || key === 'sıcak') return lang === 'tr' ? 'Sıcak' : 'Hot';
+  if (key === 'trending' || key === 'trend') return lang === 'tr' ? 'Trend' : 'Trending';
+  if (key === 'new' || key === 'yeni') return lang === 'tr' ? 'Yeni' : 'New';
+  return tag;
+}
+
+/** @deprecated UI'da emoji kullanılmıyor; CategoryIcon bileşenini kullan. Admin listeleri için tutuluyor. */
 export function categoryEmoji(category: string): string {
   const map: Record<string, string> = {
     politics: '🏛️', economy: '📈', sports: '⚽',

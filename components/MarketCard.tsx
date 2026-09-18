@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { Clock, Flame, Users } from 'lucide-react';
 import { useLang } from '@/contexts/LangContext';
 import { Market } from '@/types';
 import { Badge } from './ui/Badge';
-import { categoryColor, categoryLabel, daysUntil, formatCredits } from '@/lib/utils';
+import { CategoryIcon } from './CategoryIcon';
+import { categoryColor, categoryLabel, daysUntil, formatCredits, tagLabel } from '@/lib/utils';
 import { calculateOdds } from '@/lib/odds';
 
 interface MarketCardProps {
@@ -23,6 +25,7 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const catColor = categoryColor(market.category);
   const link = href ?? `/markets/${market.id}`;
+  const tag = tagLabel(market.tag, lang);
 
   const options = market.market_options ?? [];
   const isMulti = market.kind === 'multi' && options.length > 0;
@@ -32,15 +35,19 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const leader = topOptions[0];
 
   return (
-    <Link href={link}>
-      <div className="market-card bg-[var(--surface)] border border-[var(--border)] rounded-2xl flex flex-col cursor-pointer h-full overflow-hidden">
+    <Link href={link} className="block h-full">
+      <article className="market-card bg-[var(--surface)] border border-[var(--border)] rounded-2xl flex flex-col cursor-pointer h-full overflow-hidden">
         {/* Üst: kategori, etiket, kalan süre */}
         <div className="flex items-center justify-between gap-2 px-5 pt-4">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge color={catColor}>{categoryLabel(market.category, lang)}</Badge>
-            {market.tag && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
-                {market.tag}
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            <Badge color={catColor} className="gap-1">
+              <CategoryIcon category={market.category} size={12} />
+              {categoryLabel(market.category, lang)}
+            </Badge>
+            {tag && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
+                <Flame size={11} strokeWidth={2} aria-hidden />
+                {tag}
               </span>
             )}
           </div>
@@ -49,7 +56,8 @@ export function MarketCard({ market, href }: MarketCardProps) {
               {t('sonuç bekleniyor', 'awaiting result')}
             </span>
           ) : (
-            <span className={`font-data text-[11px] shrink-0 ${days <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
+            <span className={`inline-flex items-center gap-1 font-data text-[11px] shrink-0 ${days <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
+              <Clock size={11} strokeWidth={2} aria-hidden />
               {days}{t('g', 'd')}
             </span>
           )}
@@ -57,9 +65,9 @@ export function MarketCard({ market, href }: MarketCardProps) {
 
         {/* Başlık + olasılık */}
         <div className="flex items-start justify-between gap-3 px-5 pt-3 pb-4 flex-1">
-          <p className="text-[15px] font-bold text-[var(--ink)] leading-snug line-clamp-3">
+          <h3 className="text-[15px] font-bold text-[var(--ink)] leading-snug line-clamp-3">
             {title}
-          </p>
+          </h3>
           <div className="text-right shrink-0">
             <div className="font-data text-[26px] font-semibold leading-none" style={{ color: isMulti ? OPTION_COLORS[0] : 'var(--rise)' }}>
               {isMulti ? optPct(leader?.pool ?? 0) : yesPct}<span className="text-[15px]">%</span>
@@ -84,13 +92,16 @@ export function MarketCard({ market, href }: MarketCardProps) {
               ))}
             </div>
           ) : (
-            <div className="prob-bar">
+            <div className="prob-bar" role="img" aria-label={`${t('EVET', 'YES')} %${yesPct}`}>
               <div className="prob-bar-fill" style={{ width: `${yesPct}%` }} />
             </div>
           )}
           <div className="flex items-center justify-between mt-2 text-[11px] text-[var(--ink-3)]">
             <span className="font-data">◈{formatCredits(market.total_volume)}</span>
-            <span>{market.participant_count} {t('katılımcı', 'traders')}</span>
+            <span className="inline-flex items-center gap-1">
+              <Users size={11} strokeWidth={2} aria-hidden />
+              {market.participant_count}
+            </span>
           </div>
         </div>
 
@@ -124,7 +135,7 @@ export function MarketCard({ market, href }: MarketCardProps) {
             </div>
           </div>
         )}
-      </div>
+      </article>
     </Link>
   );
 }

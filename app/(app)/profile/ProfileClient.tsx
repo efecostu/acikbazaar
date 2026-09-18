@@ -5,6 +5,17 @@ import { useLang } from '@/contexts/LangContext';
 import { formatCredits, formatDate } from '@/lib/utils';
 import { computeBadges } from '@/lib/badges';
 import { ShareBar } from '@/components/ShareBar';
+import {
+  Target, Hash, Medal, Trophy, Gem, Zap, GraduationCap, Flame, CalendarCheck, TrendingUp, Handshake, Crown,
+  type LucideProps,
+} from 'lucide-react';
+import type { BadgeIcon } from '@/lib/badges';
+
+const BADGE_ICONS: Record<BadgeIcon, React.ComponentType<LucideProps>> = {
+  target: Target, hash: Hash, medal: Medal, trophy: Trophy, gem: Gem, zap: Zap,
+  graduation: GraduationCap, flame: Flame, calendar: CalendarCheck, trending: TrendingUp,
+  handshake: Handshake, crown: Crown,
+};
 
 interface Props { profile: Profile | null; email: string; bets: Bet[] }
 
@@ -40,7 +51,11 @@ export function ProfileClient({ profile, email, bets }: Props) {
             <p className="text-sm text-[var(--ink-2)] truncate">{email}</p>
             <p className="text-xs text-[var(--ink-3)] mt-0.5">
               {t('Katılım', 'Joined')}: {formatDate(profile.created_at, lang)}
-              {(profile.streak_count ?? 0) > 0 && <> · 🔥 {profile.streak_count} {t('gün seri', 'day streak')}</>}
+              {(profile.streak_count ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1 ml-1 text-[var(--copper)]">
+                  · <Flame size={11} strokeWidth={2} aria-hidden /> {profile.streak_count} {t('gün seri', 'day streak')}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -96,7 +111,11 @@ export function ProfileClient({ profile, email, bets }: Props) {
                   ? 'border-[var(--copper-line)] bg-[var(--copper-soft)]'
                   : 'border-[var(--border-light)] bg-[var(--surface-2)] opacity-45 grayscale'
               }`}>
-              <div className="text-2xl leading-none">{b.icon}</div>
+              {(() => { const Icon = BADGE_ICONS[b.icon]; return (
+                <div className="w-9 h-9 mx-auto rounded-lg flex items-center justify-center" style={{ background: b.earned ? 'rgba(180,101,47,0.12)' : 'transparent' }}>
+                  <Icon size={20} strokeWidth={1.75} aria-hidden className={b.earned ? 'text-[var(--copper)]' : 'text-[var(--ink-3)]'} />
+                </div>
+              ); })()}
               <div className={`text-[11px] font-semibold mt-1.5 leading-tight ${b.earned ? 'text-[var(--copper)]' : 'text-[var(--ink-3)]'}`}>
                 {lang === 'tr' ? b.tr : b.en}
               </div>

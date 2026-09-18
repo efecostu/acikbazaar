@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { MarketCard } from '@/components/MarketCard';
 import { HeroTicker } from '@/components/HeroTicker';
+import { HeroBoard } from '@/components/HeroBoard';
 import DotField from '@/components/DotField';
 import { LangProvider } from '@/contexts/LangContext';
 import type { Market } from '@/types';
@@ -52,7 +53,7 @@ const DEMO_MARKETS: Market[] = [
     title_en: 'Will Tarkan release a new album or single in 2026?',
     title_tr: 'Tarkan 2026 yılında yeni albüm veya single çıkarır mı?',
     description_en: 'Official music release on major platforms.', description_tr: 'Büyük platformlarda resmi müzik yayını.',
-    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: '🔥', status: 'active', outcome: null,
+    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: 'hot', status: 'active', outcome: null,
     ends_at: d(220), created_at: new Date().toISOString(),
     yes_pool: 13260, no_pool: 6240, total_volume: 19500, participant_count: 281,
   },
@@ -176,38 +177,41 @@ export default async function LandingPage() {
             {/* Alt kenarda içerikle yumuşak kaynaşma */}
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-[var(--paper)]" />
           </div>
-          <div className="relative max-w-7xl mx-auto px-4 pt-16 pb-14">
-          <div className="max-w-2xl">
-            <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-5">
-              Türkiye&apos;nin tahmin pazarı
-            </div>
-            <h1 className="font-display text-[44px] sm:text-[58px] font-bold text-[var(--ink)] leading-[1.05] tracking-tight mb-5">
-              Olacak mı,<br />olmayacak mı?
-            </h1>
-            <p className="text-lg text-[var(--ink-2)] leading-relaxed mb-5 max-w-xl">
-              Faizden Süper Lig&apos;e, seçimden Bitcoin&apos;e — gerçek hayat sorularına
-              EVET ya da HAYIR de. Gerçek para yok; ◈100.000 sanal krediyle başla,
-              tahmin gücünle sıralamada yüksel.
-            </p>
-            <HeroTicker
-              items={markets.slice(0, 6).map((m) => ({
-                title: m.title_tr,
-                yesPct: Math.round(
-                  (m.yes_pool / Math.max(m.yes_pool + m.no_pool, 1)) * 100
-                ),
-              }))}
-            />
-            <div className="flex gap-3 flex-wrap">
-              <Link href={loggedIn ? '/markets' : '/register'} className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
-                {loggedIn ? 'Marketlere göz at' : 'Tahmin etmeye başla'}
-              </Link>
-              {!loggedIn && (
-                <Link href="/markets" className="border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] font-semibold px-6 py-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
-                  Marketlere göz at
+          <div className="relative max-w-7xl mx-auto px-4 pt-14 pb-14 lg:pt-20 lg:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-10 lg:gap-16 items-center">
+            <div className="max-w-2xl">
+              <div className="font-data text-[11px] tracking-[0.18em] uppercase text-[var(--rise)] mb-5">
+                Türkiye&apos;nin tahmin pazarı
+              </div>
+              <h1 className="font-display text-[42px] sm:text-[56px] font-bold text-[var(--ink)] leading-[1.02] tracking-tight mb-5">
+                Olacak mı,<br />olmayacak mı?
+              </h1>
+              <p className="text-[17px] text-[var(--ink-2)] leading-relaxed mb-5 max-w-[56ch]">
+                Faizden Süper Lig&apos;e, seçimden Bitcoin&apos;e: gerçek hayat sorularına
+                EVET ya da HAYIR de. Gerçek para yok. ◈100.000 sanal krediyle başla,
+                isabetinle sıralamada yüksel.
+              </p>
+              <HeroTicker
+                items={markets.slice(0, 6).map((m) => ({
+                  title: m.title_tr,
+                  yesPct: Math.round(
+                    (m.yes_pool / Math.max(m.yes_pool + m.no_pool, 1)) * 100
+                  ),
+                }))}
+              />
+              <div className="flex gap-3 flex-wrap">
+                <Link href={loggedIn ? '/markets' : '/register'} className="bg-[var(--rise)] text-white font-semibold px-6 py-3 rounded-xl hover:brightness-110 transition-all text-sm">
+                  {loggedIn ? 'Marketlere göz at' : 'Tahmin etmeye başla'}
                 </Link>
-              )}
+                {!loggedIn && (
+                  <Link href="/markets" className="border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] font-semibold px-6 py-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors text-sm">
+                    Marketlere göz at
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+            <div className="lg:justify-self-end w-full max-w-md">
+              <HeroBoard markets={markets} linkTo={cardHref} />
+            </div>
           </div>
         </section>
 

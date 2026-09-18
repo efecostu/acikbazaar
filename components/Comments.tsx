@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
+import { MessageSquare } from 'lucide-react';
 
 export interface CommentRow {
   id: string;
@@ -68,8 +69,9 @@ export function Comments({ marketId, userId, initialComments }: Props) {
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 flex flex-col gap-4 transition-colors duration-200">
-      <h2 className="text-base font-bold text-[var(--ink)]">
-        💬 {t('Yorumlar', 'Comments')} ({initialComments.length})
+      <h2 className="font-display text-base font-bold text-[var(--ink)] inline-flex items-center gap-2">
+        <MessageSquare size={16} strokeWidth={2} aria-hidden className="text-[var(--ink-3)]" />
+        {t('Yorumlar', 'Comments')} <span className="font-data text-sm text-[var(--ink-3)]">({initialComments.length})</span>
       </h2>
 
       {/* Composer */}

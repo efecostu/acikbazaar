@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
-import { categoryLabel, categoryEmoji, formatDate } from '@/lib/utils';
+import { categoryLabel, formatDate } from '@/lib/utils';
+import { CategoryIcon } from '@/components/CategoryIcon';
 
 const CATEGORIES = ['politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 
@@ -107,7 +108,7 @@ export function SuggestClient({ userId, mySuggestions }: Props) {
             <label className={labelCls}>{t('Kategori', 'Category')}</label>
             <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{categoryEmoji(c)} {categoryLabel(c, lang)}</option>
+                <option key={c} value={c}>{categoryLabel(c, lang)}</option>
               ))}
             </select>
           </div>
@@ -151,7 +152,7 @@ export function SuggestClient({ userId, mySuggestions }: Props) {
               <div className="min-w-0">
                 <p className="text-[var(--ink)] truncate">{s.title_tr}</p>
                 <p className="text-[11px] text-[var(--ink-3)] mt-0.5">
-                  {categoryEmoji(s.category)} {categoryLabel(s.category, lang)} · {formatDate(s.ends_at, lang)}
+                  <CategoryIcon category={s.category} size={12} className="inline mr-1 align-[-1px]" />{categoryLabel(s.category, lang)} · {formatDate(s.ends_at, lang)}
                 </p>
               </div>
               <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-md ${STATUS_STYLE[s.status]}`}>

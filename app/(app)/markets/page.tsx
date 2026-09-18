@@ -134,7 +134,7 @@ export const DEMO_MARKETS: Market[] = [
     title_en: 'Will Tarkan release a new album or single in 2026?',
     title_tr: 'Tarkan 2026 yılında yeni albüm veya single çıkarır mı?',
     description_en: 'Official music release on major platforms.', description_tr: 'Büyük platformlarda resmi müzik yayını.',
-    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: '🔥', status: 'active', outcome: null,
+    category: 'entertainment', region: 'turkey', yes_prob: 0.68, tag: 'hot', status: 'active', outcome: null,
     ends_at: d(220), created_at: new Date().toISOString(),
     ...pools(0.68, 19500, 281),
   },

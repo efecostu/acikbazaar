@@ -6,7 +6,7 @@ import { Market, MarketOption, Bet, BetSide } from '@/types';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
 import { calculateOdds, calculatePayout } from '@/lib/odds';
-import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate, getAIFavorites } from '@/lib/utils';
+import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate, getAIFavorites, tagLabel } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { AIFavorites } from '@/components/AIFavorites';
@@ -15,6 +15,8 @@ import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { celebrate } from '@/lib/confetti';
 import { Countdown } from '@/components/Countdown';
 import { ShareBar } from '@/components/ShareBar';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { ArrowLeft, Flame, Globe2, MapPin, Users } from 'lucide-react';
 
 interface BetWithOption extends Bet {
   market_options?: { label_tr: string; label_en: string } | null;
@@ -27,11 +29,13 @@ interface Props {
   userBets: BetWithOption[];
   options?: MarketOption[];
   history?: ProbPoint[];
+  /** Sol sütunun altına yerleşen içerik (yorumlar) */
+  children?: React.ReactNode;
 }
 
 const OPTION_COLORS = ['#2FD588', '#5B9BFF', '#F5B23D', '#FF7A70', '#C792EA', '#6BD5E1'];
 
-export function MarketDetailClient({ market, balance: initialBalance, userId, userBets, options = [], history = [] }: Props) {
+export function MarketDetailClient({ market, balance: initialBalance, userId, userBets, options = [], history = [], children }: Props) {
   const { lang, t } = useLang();
   const router = useRouter();
   const [balance, setBalance] = useState(initialBalance);
@@ -134,23 +138,34 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-5">
-      <button onClick={() => router.back()} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors self-start flex items-center gap-1">
-        ← {t('Geri', 'Back')}
+    <div className="max-w-6xl mx-auto flex flex-col gap-5">
+      <button onClick={() => router.back()} className="text-sm text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors self-start inline-flex items-center gap-1.5 min-h-[44px] -my-2">
+        <ArrowLeft size={15} strokeWidth={2} aria-hidden />
+        {t('Geri', 'Back')}
       </button>
 
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] gap-5 items-start">
+      {/* ---------- Sol sütun: bilgi, kotasyon, grafik, AI, yorumlar ---------- */}
+      <div className="flex flex-col gap-5 min-w-0">
       {/* Market info */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden transition-colors duration-200">
         <div className="p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <Badge color={categoryColor(market.category)}>{categoryLabel(market.category, lang)}</Badge>
-              {market.tag && (
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
-                  {market.tag}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge color={categoryColor(market.category)} className="gap-1">
+                <CategoryIcon category={market.category} size={12} />
+                {categoryLabel(market.category, lang)}
+              </Badge>
+              {tagLabel(market.tag, lang) && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
+                  <Flame size={11} strokeWidth={2} aria-hidden />
+                  {tagLabel(market.tag, lang)}
                 </span>
               )}
-              <span className="text-xs text-[var(--ink-3)]">{market.region === 'turkey' ? '🇹🇷' : '🌐'}</span>
+              <span className="inline-flex items-center gap-1 text-[11px] text-[var(--ink-3)] uppercase tracking-wider">
+                {market.region === 'turkey' ? <MapPin size={11} strokeWidth={2} aria-hidden /> : <Globe2 size={11} strokeWidth={2} aria-hidden />}
+                {market.region === 'turkey' ? 'Türkiye' : 'Global'}
+              </span>
             </div>
             <span className="flex items-center gap-2">
               <Countdown endsAt={market.ends_at} />
@@ -226,7 +241,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
             </div>
             <div className="flex items-center justify-between mt-3 text-[11px]" style={{ color: 'var(--board-text)' }}>
               <span>◈<AnimatedNumber value={live.total_volume} format={formatCredits} flash={false} /> {t('hacim', 'volume')}</span>
-              <span><AnimatedNumber value={live.participant_count} flash={false} /> {t('katılımcı', 'traders')}</span>
+              <span className="inline-flex items-center gap-1"><Users size={11} strokeWidth={2} aria-hidden /><AnimatedNumber value={live.participant_count} flash={false} /> {t('katılımcı', 'traders')}</span>
             </div>
           </div>
         )}
@@ -240,6 +255,11 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       {/* AI Favorites — sadece binary */}
       {!isMulti && <AIFavorites favorites={getAIFavorites(market.id, yesProb)} />}
 
+      {children}
+      </div>
+
+      {/* ---------- Sağ sütun: bahis paneli (masaüstünde yapışkan) ---------- */}
+      <div className="flex flex-col gap-5 lg:sticky lg:top-20">
       {/* Anonim kullanıcı: bahis için giriş CTA */}
       {isOpen && !userId && (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 text-center flex flex-col gap-3 transition-colors duration-200">
@@ -410,6 +430,8 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
           })}
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }

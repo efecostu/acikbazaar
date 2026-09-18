@@ -66,14 +66,13 @@ export default async function MarketDetailPage({ params }: Props) {
         userBets={(userBets as never[]) ?? []}
         options={options ?? []}
         history={history ?? []}
-      />
-      <div className="max-w-2xl mx-auto mt-5">
+      >
         <Comments
           marketId={id}
           userId={user?.id ?? ''}
           initialComments={(comments as never[]) ?? []}
         />
-      </div>
+      </MarketDetailClient>
     </>
   );
 }

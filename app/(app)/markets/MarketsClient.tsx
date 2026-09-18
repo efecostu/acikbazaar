@@ -6,7 +6,9 @@ import { Market, MarketCategory, MarketRegion } from '@/types';
 import { MarketCard } from '@/components/MarketCard';
 import { LiveTicker, TradeRow } from '@/components/LiveTicker';
 import { useLang } from '@/contexts/LangContext';
-import { categoryLabel, categoryEmoji } from '@/lib/utils';
+import { Lightbulb, Search, Sparkles } from 'lucide-react';
+import { CategoryIcon } from '@/components/CategoryIcon';
+import { categoryLabel } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 const CATEGORIES: (MarketCategory | 'all')[] = ['all', 'politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
@@ -59,17 +61,16 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
           href="/markets/suggest"
           className="text-sm font-semibold text-[var(--rise)] border border-[var(--rise-line)] bg-[var(--rise-soft)] px-4 py-2 rounded-xl hover:brightness-105 transition-all"
         >
-          💡 {t('Market Öner', 'Suggest a Market')}
+          <span className="inline-flex items-center gap-1.5"><Lightbulb size={14} strokeWidth={2} aria-hidden />{t('Market Öner', 'Suggest a Market')}</span>
         </Link>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-3)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+        <Search size={16} strokeWidth={2} aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)]" />
         <input
-          type="text"
+          type="search"
+          aria-label={t('Market ara', 'Search markets')}
           placeholder={t('Market ara...', 'Search markets...')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -87,7 +88,7 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
                   ? 'border-[var(--copper)] text-[var(--copper)] bg-[var(--copper-soft)]'
                   : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
-              ⭐ {t('Senin için', 'For you')}
+              <span className="inline-flex items-center gap-1.5"><Sparkles size={13} strokeWidth={2} aria-hidden />{t('Senin için', 'For you')}</span>
             </button>
           )}
           {CATEGORIES.map((cat) => (
@@ -97,7 +98,9 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
                   ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
                   : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
-              {cat === 'all' ? t('Tümü', 'All') : `${categoryEmoji(cat)} ${categoryLabel(cat, lang)}`}
+              {cat === 'all' ? t('Tümü', 'All') : (
+                <span className="inline-flex items-center gap-1.5"><CategoryIcon category={cat} size={13} />{categoryLabel(cat, lang)}</span>
+              )}
             </button>
           ))}
         </div>
@@ -109,7 +112,7 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
                   ? 'border-[var(--rise)] text-[var(--rise)] bg-[var(--rise-soft)]'
                   : 'border-[var(--border)] text-[var(--ink-2)] hover:border-[var(--ink-3)] bg-[var(--surface)]'
               )}>
-              {reg === 'all' ? t('Tümü', 'All') : reg === 'turkey' ? '🇹🇷 TR' : '🌐 Global'}
+              {reg === 'all' ? t('Tümü', 'All') : reg === 'turkey' ? t('Türkiye', 'Türkiye') : 'Global'}
             </button>
           ))}
         </div>

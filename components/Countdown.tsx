@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLang } from '@/contexts/LangContext';
+import { Timer } from 'lucide-react';
 
 interface Props {
   endsAt: string;
@@ -32,7 +33,7 @@ export function Countdown({ endsAt }: Props) {
 
   return (
     <span className="inline-flex items-center gap-1.5 font-data text-xs font-medium bg-[var(--fall-soft)] text-[var(--fall)] border border-[var(--fall-line)] rounded-md px-2 py-0.5">
-      ⏳ {d > 0 ? `${d}${t('g', 'd')} ` : ''}{pad(h)}:{pad(m)}:{pad(sec)}
+      <Timer size={12} strokeWidth={2} aria-hidden />{d > 0 ? `${d}${t('g', 'd')} ` : ''}{pad(h)}:{pad(m)}:{pad(sec)}
     </span>
   );
 }

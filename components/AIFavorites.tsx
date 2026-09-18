@@ -2,6 +2,7 @@
 
 import { useLang } from '@/contexts/LangContext';
 import type { AIFavorite } from '@/types';
+import { Sparkles } from 'lucide-react';
 
 interface Props {
   favorites: AIFavorite[];
@@ -14,8 +15,9 @@ export function AIFavorites({ favorites }: Props) {
     <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 transition-colors duration-200">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-display text-sm font-bold text-[var(--ink)]">
-            🤖 {t('Yapay Zeka Tahminleri', 'AI Predictions')}
+          <h3 className="font-display text-sm font-bold text-[var(--ink)] inline-flex items-center gap-1.5">
+            <Sparkles size={14} strokeWidth={2} aria-hidden className="text-[var(--copper)]" />
+            {t('Yapay Zeka Tahminleri', 'AI Predictions')}
           </h3>
           <p className="text-xs text-[var(--ink-3)] mt-0.5">
             {t('Önde gelen modellerin EVET tahmini', 'Leading models\' YES estimate')}
