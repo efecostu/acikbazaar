@@ -80,6 +80,10 @@ Son 150 bahsi listeler: saat (TRT), kim (bot/kullanıcı ikonu), market, taraf, 
 
 `supabase-migration-9.sql` iki şey yapar: kullanıcı adı kısıtını düzeltir (e-posta biçimli eski adları temizler, bot isimlerine izin verir; bu kısıt yüzünden bahis sırasında `profiles_username_format` hatası geliyordu) ve sıralamayı canlı hale getirir. `profit` = gerçekleşen kâr + açık pozisyonların güncel orana göre değeri (mark-to-market); botlar oranı oynattıkça tablo değişir.
 
+## Gece raporu
+
+Çözüm cron'u (06:00 UTC, 09:00 TRT) bittiği anda `lib/report.ts` e-posta gönderir: cron'un o gece çözdüğü her market (sonuç, güven, gerekçe, ERKEN etiketi, kazanan/kaybeden), karar veremedikleri, hatalar, üretilen marketler, sonuç bekleyenler, 3 gün içinde kapanacaklar, kullanıcı bahisleri ve yorumları, bot yorum örnekleri, yeni kullanıcılar, bekleyen öneriler, canlı sıralama. Üstte "Dikkat" kutusu. Alıcılar `REPORT_EMAILS` (virgülle) yoksa `ADMIN_EMAIL`. Manuel: `GET /api/cron/resolve?report=1` (sweep + rapor) veya `GET /api/cron/report` (sadece rapor).
+
 ## Modeller ve maliyet
 
 - Bot yorumları: `LLM_*` (OpenRouter, `google/gemini-2.5-flash-lite`, ~0,00005 $/yorum).
