@@ -61,6 +61,10 @@ Dört bot (`is_bot = true`) `/api/bots/tick` ile bahis yapar: her tick 2-4 bahis
 curl -H "x-admin-secret: $ADMIN_SECRET" "https://acikbazaar.com/api/bots/tick?force=1&burst=25"
 ```
 
+### Bot yorumları
+
+`lib/botVoice.ts`: her botun sesi (Ekşi/Twitter/İnci ağzı) + few-shot örnek yorumları. Prompt'a humanizer ilkeleri gömülü (sahneleme yok, kapanış cümlesi yok, üçlü liste yok, tire yok, emoji/hashtag yok, uydurma rakam yok). Normal tick'te %35 ihtimalle yorum; aynı markete 2 saat içinde ikinci bot yorumu yazılmaz. Anthropic anahtarı yoksa bot başına şablon havuzundan seçer. `sanitizeComment` modelin kaçırdığı emoji/tire/uzunluğu düzeltir.
+
 ## Market seti (AI olmadan)
 
 `supabase-seed-markets-2026-09.sql` elle küratörlü, güncel gündeme dayalı 39 market içerir (spor, ekonomi, siyaset, teknoloji, eğlence, hava, dünya). İdempotenttir; SQL Editor'da çalıştırıp ardından bot burst'ü tetikleyin. Anthropic anahtarı çalışınca cron bu seti otomatik üretimle tamamlar.

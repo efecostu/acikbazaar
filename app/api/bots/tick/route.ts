@@ -2,17 +2,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { calculateOdds, calculatePayout } from '@/lib/odds';
+import { PERSONAS, DEFAULT_PERSONA, commentPrompt, fallbackComment, sanitizeComment } from '@/lib/botVoice';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-// Bot kişilikleri — yorum tonu + bahis stili
-const PERSONAS: Record<string, { voice: string; contrarian: number; stake: [number, number] }> = {
-  KahinKemal:   { voice: 'Kendine aşırı güvenen, iddialı konuşan bir amca. Hafif "ben demiştim" havası var.', contrarian: 0.25, stake: [1500, 12000] },
-  BorsaKurdu:   { voice: 'Piyasa diliyle konuşan, oranlara ve rakamlara referans veren borsacı tipi.',         contrarian: 0.35, stake: [3000, 25000] },
-  AnalizciAyse: { voice: 'Sakin, veri odaklı, kısa ve mantıklı analiz yapan.',                                   contrarian: 0.30, stake: [800, 7000] },
-  SkeptikSelin: { voice: 'Her şeye şüpheyle yaklaşan, çoğunluğun tersini savunmayı seven.',                     contrarian: 0.65, stake: [1000, 9000] },
-};
 
 /** İki tick arası en az bu kadar dakika geçmeli (sayfa ziyaretleriyle tetiklenir). */
 const THROTTLE_MINUTES = 5;
@@ -94,7 +88,7 @@ export async function GET(req: Request) {
     const market = burst > 0 ? pickWeighted() : (() => { let m = pickWeighted(); let tries = 0; while (used.has(m.id) && tries++ < 5) m = pickWeighted(); return m; })();
     used.add(market.id);
     const bot = pick(bots);
-    const persona = PERSONAS[bot.username] ?? { voice: '', contrarian: 0.3, stake: [200, 3000] as [number, number] };
+    const persona = PERSONAS[bot.username] ?? DEFAULT_PERSONA;
     let amount = persona.stake[0] + Math.floor(Math.random() * (persona.stake[1] - persona.stake[0]));
     if (Math.random() < 0.15) amount *= 2 + Math.floor(Math.random() * 2); // balina hamlesi: oranı oynatır
 
@@ -141,32 +135,45 @@ export async function GET(req: Request) {
     actions.push({ bot: bot.username, market: market.title_tr, side, amount, yes_pct: Math.round(newYesProb * 100) });
   }
 
-  // ~%25 ihtimalle bir bot, bahis yaptığı markete kısa bir yorum yazar (Claude varsa)
+  // Yorum: normal tick'te %35, burst'te %15 ihtimalle. Claude varsa üretir, yoksa şablon havuzu.
+  // Aynı markete son 2 saatte bot yorumu yazıldıysa atla (spam olmasın).
   let commented: string | null = null;
-  if (burst === 0 && Math.random() < 0.25 && process.env.ANTHROPIC_API_KEY) {
+  const commentChance = burst > 0 ? 0.15 : 0.35;
+  if (actions.length && Math.random() < commentChance) {
     try {
-      const action = pick(actions) as { bot: string; market: string; side: string; yes_pct: number };
+      const action = pick(actions) as { bot: string; market: string; side: 'yes' | 'no'; yes_pct: number };
       const bot = bots.find((b) => b.username === action.bot)!;
       const market = markets.find((m) => m.title_tr === action.market)!;
-      const client = new Anthropic();
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: `Sen "${action.bot}" adlı bir tahmin platformu kullanıcısısın. Kişiliğin: ${PERSONAS[action.bot]?.voice ?? ''}
+      const { data: recentRows } = await supabase
+        .from('comments')
+        .select('content, created_at, profiles!inner(is_bot)')
+        .eq('market_id', market.id)
+        .order('created_at', { ascending: false })
+        .limit(4);
+      type RC = { content: string; created_at: string; profiles: { is_bot: boolean } | { is_bot: boolean }[] };
+      const recent = (recentRows ?? []) as unknown as RC[];
+      const lastBotAt = recent.find((r) => (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles)?.is_bot)?.created_at;
+      const tooSoon = lastBotAt && Date.now() - new Date(lastBotAt).getTime() < 2 * 3600_000;
 
-Market: "${market.title_tr}"
-Şu anki EVET oranı: %${action.yes_pct}
-Senin pozisyonun: ${action.side === 'yes' ? 'EVET' : 'HAYIR'}
-
-Bu markete 1-2 cümlelik kısa, doğal, günlük Türkçe bir yorum yaz. Kişiliğine uygun konuş. Hashtag ve emoji kullanma. Sadece yorumu döndür.`,
-        }],
-      });
-      const text = response.content[0]?.type === 'text' ? response.content[0].text.trim() : '';
-      if (text) {
-        await supabase.from('comments').insert({ market_id: market.id, user_id: bot.id, content: text.slice(0, 1000) });
-        commented = `${action.bot}: ${text}`;
+      if (!tooSoon) {
+        let text = '';
+        if (process.env.ANTHROPIC_API_KEY) {
+          try {
+            const client = new Anthropic();
+            const response = await client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 120,
+              temperature: 1,
+              messages: [{ role: 'user', content: commentPrompt(action.bot, PERSONAS[action.bot] ?? DEFAULT_PERSONA, market.title_tr, action.yes_pct, action.side, recent.map((r) => r.content)) }],
+            });
+            text = response.content[0]?.type === 'text' ? sanitizeComment(response.content[0].text) : '';
+          } catch { text = ''; }
+        }
+        if (!text) text = fallbackComment(action.bot, action.side, action.yes_pct) ?? '';
+        if (text) {
+          await supabase.from('comments').insert({ market_id: market.id, user_id: bot.id, content: text.slice(0, 1000) });
+          commented = `${action.bot}: ${text}`;
+        }
       }
     } catch { /* yorum üretilemezse tick yine başarılı */ }
   }
