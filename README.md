@@ -63,6 +63,9 @@ curl -H "x-admin-secret: $ADMIN_SECRET" "https://acikbazaar.com/api/bots/tick?fo
 
 ### Bot yorumları
 
+Her bahse bir yorum. Model seçimi `lib/llm.ts`: `LLM_BASE_URL` + `LLM_API_KEY` (+ `LLM_MODEL`) tanımlıysa OpenAI uyumlu ucuz bir model (Qwen Flash, OpenRouter, Groq, DeepSeek), yoksa `ANTHROPIC_API_KEY`, o da yoksa şablon havuzu. Market üretimi ve otomatik çözüm web araması gerektirdiği için Anthropic'te kalır.
+
+
 `lib/botVoice.ts`: her botun sesi (Ekşi/Twitter/İnci ağzı) + few-shot örnek yorumları. Prompt'a humanizer ilkeleri gömülü (sahneleme yok, kapanış cümlesi yok, üçlü liste yok, tire yok, emoji/hashtag yok, uydurma rakam yok). Normal tick'te %35 ihtimalle yorum; aynı markete 2 saat içinde ikinci bot yorumu yazılmaz. Anthropic anahtarı yoksa bot başına şablon havuzundan seçer. `sanitizeComment` modelin kaçırdığı emoji/tire/uzunluğu düzeltir.
 
 ## Market seti (AI olmadan)

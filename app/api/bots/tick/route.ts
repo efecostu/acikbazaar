@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { calculateOdds, calculatePayout } from '@/lib/odds';
 import { PERSONAS, DEFAULT_PERSONA, commentPrompt, fallbackComment, sanitizeComment } from '@/lib/botVoice';
+import { chat, llmProvider } from '@/lib/llm';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -135,48 +135,42 @@ export async function GET(req: Request) {
     actions.push({ bot: bot.username, market: market.title_tr, side, amount, yes_pct: Math.round(newYesProb * 100) });
   }
 
-  // Yorum: normal tick'te %35, burst'te %15 ihtimalle. Claude varsa üretir, yoksa şablon havuzu.
-  // Aynı markete son 2 saatte bot yorumu yazıldıysa atla (spam olmasın).
-  let commented: string | null = null;
-  const commentChance = burst > 0 ? 0.15 : 0.35;
-  if (actions.length && Math.random() < commentChance) {
+  // Yorum: her bahse bir yorum. LLM varsa (Qwen/OpenRouter/Claude) üretir, yoksa şablon havuzu.
+  // Aynı markete son yorumlar tekrar edilmez; şablon havuzu tükenirse o bahis yorumsuz kalır.
+  const comments: string[] = [];
+  const hasLlm = llmProvider() !== null;
+  const targets = burst > 0 ? actions.slice(0, 6) : actions; // burst'te maliyet/süre sınırı
+  await Promise.all(targets.map(async (raw) => {
+    const action = raw as { bot: string; market: string; side: 'yes' | 'no'; yes_pct: number };
     try {
-      const action = pick(actions) as { bot: string; market: string; side: 'yes' | 'no'; yes_pct: number };
       const bot = bots.find((b) => b.username === action.bot)!;
       const market = markets.find((m) => m.title_tr === action.market)!;
       const { data: recentRows } = await supabase
-        .from('comments')
-        .select('content, created_at, profiles!inner(is_bot)')
-        .eq('market_id', market.id)
-        .order('created_at', { ascending: false })
-        .limit(4);
-      type RC = { content: string; created_at: string; profiles: { is_bot: boolean } | { is_bot: boolean }[] };
-      const recent = (recentRows ?? []) as unknown as RC[];
-      const lastBotAt = recent.find((r) => (Array.isArray(r.profiles) ? r.profiles[0] : r.profiles)?.is_bot)?.created_at;
-      const tooSoon = lastBotAt && Date.now() - new Date(lastBotAt).getTime() < 2 * 3600_000;
+        .from('comments').select('content').eq('market_id', market.id)
+        .order('created_at', { ascending: false }).limit(6);
+      const recent = (recentRows ?? []).map((r) => r.content as string);
 
-      if (!tooSoon) {
-        let text = '';
-        if (process.env.ANTHROPIC_API_KEY) {
-          try {
-            const client = new Anthropic();
-            const response = await client.messages.create({
-              model: 'claude-sonnet-4-6',
-              max_tokens: 120,
-              temperature: 1,
-              messages: [{ role: 'user', content: commentPrompt(action.bot, PERSONAS[action.bot] ?? DEFAULT_PERSONA, market.title_tr, action.yes_pct, action.side, recent.map((r) => r.content)) }],
-            });
-            text = response.content[0]?.type === 'text' ? sanitizeComment(response.content[0].text) : '';
-          } catch { text = ''; }
-        }
-        if (!text) text = fallbackComment(action.bot, action.side, action.yes_pct) ?? '';
-        if (text) {
-          await supabase.from('comments').insert({ market_id: market.id, user_id: bot.id, content: text.slice(0, 1000) });
-          commented = `${action.bot}: ${text}`;
+      let text = '';
+      if (hasLlm) {
+        try {
+          text = sanitizeComment(await chat(
+            commentPrompt(action.bot, PERSONAS[action.bot] ?? DEFAULT_PERSONA, market.title_tr, action.yes_pct, action.side, recent),
+            { maxTokens: 120, temperature: 1 },
+          ));
+        } catch (e) { errors.push(`llm: ${(e as Error).message.slice(0, 120)}`); }
+      }
+      if (!text) {
+        for (let tries = 0; tries < 4 && !text; tries++) {
+          const cand = fallbackComment(action.bot, action.side, action.yes_pct) ?? '';
+          if (cand && !recent.includes(cand)) text = cand;
         }
       }
-    } catch { /* yorum üretilemezse tick yine başarılı */ }
-  }
+      if (text && !recent.includes(text)) {
+        await supabase.from('comments').insert({ market_id: market.id, user_id: bot.id, content: text.slice(0, 1000) });
+        comments.push(`${action.bot}: ${text}`);
+      }
+    } catch { /* tek yorum patlarsa diğerleri devam */ }
+  }));
 
-  return Response.json({ bets_placed: actions.length, actions, commented, errors: errors.length ? errors : undefined });
+  return Response.json({ bets_placed: actions.length, actions, comments, llm: llmProvider() ?? 'fallback', errors: errors.length ? errors : undefined });
 }
