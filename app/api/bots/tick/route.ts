@@ -172,5 +172,5 @@ export async function GET(req: Request) {
     } catch { /* tek yorum patlarsa diğerleri devam */ }
   }));
 
-  return Response.json({ bets_placed: actions.length, actions, comments, llm: llmProvider() ?? 'fallback', errors: errors.length ? errors : undefined });
+  return Response.json({ bets_placed: actions.length, actions, comments, llm: llmProvider() ?? 'fallback', research: process.env.SERPER_API_KEY ? 'serper' : (process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'none'), errors: errors.length ? errors : undefined });
 }
