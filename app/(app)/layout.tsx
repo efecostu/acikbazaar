@@ -38,9 +38,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!profile) {
     const { createAdminClient } = await import('@/lib/supabase/server');
     const admin = await createAdminClient();
-    const username = user.user_metadata?.username
-      || user.email?.split('@')[0]
-      || 'user';
+    const raw = (user.user_metadata?.username || user.email?.split('@')[0] || 'user') as string;
+    const cleaned = raw.toLowerCase().replace(/[çğıöşüâîû]/g, (c) => ({ 'ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','â':'a','î':'i','û':'u' }[c] ?? ''))
+      .replace(/[^a-z0-9_]/g, '').slice(0, 20);
+    const username = cleaned.length >= 3 ? cleaned : `user_${user.id.slice(0, 6)}`;
 
     await admin.from('profiles').upsert({
       id: user.id,

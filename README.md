@@ -65,6 +65,10 @@ curl -H "x-admin-secret: $ADMIN_SECRET" "https://acikbazaar.com/api/bots/tick?fo
 
 `supabase-seed-markets-2026-09.sql` elle küratörlü, güncel gündeme dayalı 39 market içerir (spor, ekonomi, siyaset, teknoloji, eğlence, hava, dünya). İdempotenttir; SQL Editor'da çalıştırıp ardından bot burst'ü tetikleyin. Anthropic anahtarı çalışınca cron bu seti otomatik üretimle tamamlar.
 
+## Sıralama (migration 9)
+
+`supabase-migration-9.sql` iki şey yapar: kullanıcı adı kısıtını düzeltir (e-posta biçimli eski adları temizler, bot isimlerine izin verir; bu kısıt yüzünden bahis sırasında `profiles_username_format` hatası geliyordu) ve sıralamayı canlı hale getirir. `profit` = gerçekleşen kâr + açık pozisyonların güncel orana göre değeri (mark-to-market); botlar oranı oynattıkça tablo değişir.
+
 ## Market yaşam döngüsü
 
 `active` → (ends_at geçti) → cron çözer → `resolved` (bahisler ödenir, `resolution_note` yazılır)

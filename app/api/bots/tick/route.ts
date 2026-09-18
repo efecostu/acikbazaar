@@ -8,14 +8,14 @@ export const maxDuration = 60;
 
 // Bot kişilikleri — yorum tonu + bahis stili
 const PERSONAS: Record<string, { voice: string; contrarian: number; stake: [number, number] }> = {
-  KahinKemal:   { voice: 'Kendine aşırı güvenen, iddialı konuşan bir amca. Hafif "ben demiştim" havası var.', contrarian: 0.25, stake: [500, 4000] },
-  BorsaKurdu:   { voice: 'Piyasa diliyle konuşan, oranlara ve rakamlara referans veren borsacı tipi.',         contrarian: 0.35, stake: [1000, 8000] },
-  AnalizciAyse: { voice: 'Sakin, veri odaklı, kısa ve mantıklı analiz yapan.',                                   contrarian: 0.30, stake: [300, 2500] },
-  SkeptikSelin: { voice: 'Her şeye şüpheyle yaklaşan, çoğunluğun tersini savunmayı seven.',                     contrarian: 0.65, stake: [200, 3000] },
+  KahinKemal:   { voice: 'Kendine aşırı güvenen, iddialı konuşan bir amca. Hafif "ben demiştim" havası var.', contrarian: 0.25, stake: [1500, 12000] },
+  BorsaKurdu:   { voice: 'Piyasa diliyle konuşan, oranlara ve rakamlara referans veren borsacı tipi.',         contrarian: 0.35, stake: [3000, 25000] },
+  AnalizciAyse: { voice: 'Sakin, veri odaklı, kısa ve mantıklı analiz yapan.',                                   contrarian: 0.30, stake: [800, 7000] },
+  SkeptikSelin: { voice: 'Her şeye şüpheyle yaklaşan, çoğunluğun tersini savunmayı seven.',                     contrarian: 0.65, stake: [1000, 9000] },
 };
 
 /** İki tick arası en az bu kadar dakika geçmeli (sayfa ziyaretleriyle tetiklenir). */
-const THROTTLE_MINUTES = 12;
+const THROTTLE_MINUTES = 5;
 /** Gece 02:00–07:00 TRT arası botlar da uyur — gerçekçi ritim. */
 const QUIET_HOURS_TRT: [number, number] = [2, 7];
 
@@ -85,8 +85,9 @@ export async function GET(req: Request) {
   };
   const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-  const count = burst > 0 ? burst : 2 + Math.floor(Math.random() * 3); // normal tick: 2-4 bahis
+  const count = burst > 0 ? burst : 4 + Math.floor(Math.random() * 5); // normal tick: 4-8 bahis
   const actions: Record<string, unknown>[] = [];
+  const errors: string[] = [];
   const used = new Set<string>();
 
   for (let i = 0; i < count; i++) {
@@ -94,11 +95,13 @@ export async function GET(req: Request) {
     used.add(market.id);
     const bot = pick(bots);
     const persona = PERSONAS[bot.username] ?? { voice: '', contrarian: 0.3, stake: [200, 3000] as [number, number] };
-    const amount = persona.stake[0] + Math.floor(Math.random() * (persona.stake[1] - persona.stake[0]));
+    let amount = persona.stake[0] + Math.floor(Math.random() * (persona.stake[1] - persona.stake[0]));
+    if (Math.random() < 0.15) amount *= 2 + Math.floor(Math.random() * 2); // balina hamlesi: oranı oynatır
 
     if (bot.balance < amount) {
-      await supabase.from('profiles').update({ balance: bot.balance + 25_000 }).eq('id', bot.id);
-      bot.balance += 25_000;
+      // Botların kredisi bitmesin: sessizce 100k yükle (sıralama kârı bahis sonuçlarından hesaplanır, bakiyeden değil)
+      await supabase.from('profiles').update({ balance: bot.balance + 100_000 }).eq('id', bot.id);
+      bot.balance += 100_000;
     }
 
     const favoriteSide = market.yes_pool >= market.no_pool ? 'yes' : 'no';
@@ -126,10 +129,11 @@ export async function GET(req: Request) {
       participant_count: market.participant_count + 1,
     }).eq('id', market.id);
     await supabase.from('market_prob_history').insert({ market_id: market.id, yes_prob: newYesProb });
-    await supabase.from('profiles').update({
+    const { error: profileErr } = await supabase.from('profiles').update({
       balance: bot.balance - amount,
       total_bets: (bot.total_bets ?? 0) + 1,
     }).eq('id', bot.id);
+    if (profileErr) errors.push(`${bot.username}: ${profileErr.message}`);
     bot.balance -= amount;
     bot.total_bets = (bot.total_bets ?? 0) + 1;
     market.yes_pool = newYesPool; market.no_pool = newNoPool; market.total_volume += amount; market.participant_count += 1;
@@ -167,5 +171,5 @@ Bu markete 1-2 cümlelik kısa, doğal, günlük Türkçe bir yorum yaz. Kişili
     } catch { /* yorum üretilemezse tick yine başarılı */ }
   }
 
-  return Response.json({ bets_placed: actions.length, actions, commented });
+  return Response.json({ bets_placed: actions.length, actions, commented, errors: errors.length ? errors : undefined });
 }

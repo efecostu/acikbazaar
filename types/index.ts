@@ -76,6 +76,9 @@ export interface LeaderboardEntry {
   total_bets: number;
   total_won: number;
   profit: number;
+  realized?: number;
+  unrealized?: number;
+  open_positions?: number;
   win_rate: number;
 }
 

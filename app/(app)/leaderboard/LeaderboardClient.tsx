@@ -30,6 +30,7 @@ export function LeaderboardClient({ entries: allTime, weekly = [] }: Props) {
             {period === 'week'
               ? t('Son 7 günde kapanan bahislerden kâr', 'Profit from bets settled in the last 7 days')
               : t('Kâra göre sıralı top 100', 'Top 100 by profit')}
+            {' · '}{t('Açık pozisyonlar güncel orana göre değerlenir', 'Open positions are marked to current odds')}
           </p>
         </div>
         <div className="flex gap-1.5">
@@ -77,7 +78,8 @@ export function LeaderboardClient({ entries: allTime, weekly = [] }: Props) {
               <span className="font-data hidden sm:block text-right text-[var(--ink-2)] text-xs">◈{formatCredits(entry.balance)}</span>
               <span className="font-data hidden sm:block text-right text-[var(--ink-2)] text-xs">{entry.total_bets}</span>
               <span className="font-data hidden sm:block text-right text-[var(--ink-2)] text-xs">{entry.win_rate}%</span>
-              <span className={`font-data font-semibold text-right ${entry.profit >= 0 ? 'text-[var(--rise)]' : 'text-[var(--fall)]'}`}>
+              <span className={`font-data font-semibold text-right ${entry.profit >= 0 ? 'text-[var(--rise)]' : 'text-[var(--fall)]'}`}
+                title={entry.unrealized != null ? t(`Açık pozisyon: ${entry.unrealized >= 0 ? '+' : ''}${formatCredits(entry.unrealized)}`, `Open positions: ${entry.unrealized >= 0 ? '+' : ''}${formatCredits(entry.unrealized)}`) : undefined}>
                 {entry.profit >= 0 ? '+' : ''}◈{formatCredits(entry.profit)}
               </span>
             </div>
