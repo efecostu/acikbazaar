@@ -189,7 +189,7 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
       }).join('\n');
 
       // Maliyet: erken tarama her gün değil, Pazartesi ve Perşembe (EARLY_SCAN_DAYS ile değiştirilebilir, ör. "1,2,3,4,5")
-      const scanDays = (process.env.EARLY_SCAN_DAYS ?? '1,4').split(',').map((d) => parseInt(d.trim()));
+      const scanDays = (process.env.EARLY_SCAN_DAYS ?? '1').split(',').map((d) => parseInt(d.trim()));
       const dow = new Date().getUTCDay();
       if (!scanDays.includes(dow) && !opts.forceEarly) {
         results.push({ path: 'early', status: 'skipped', reason: `erken tarama günü değil (gün ${dow}; EARLY_SCAN_DAYS=${scanDays.join(',')})` });
