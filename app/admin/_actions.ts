@@ -196,7 +196,7 @@ export async function approveSuggestion(suggestionId: string) {
     const Anthropic = (await import('@anthropic-ai/sdk')).default;
     const client = new Anthropic();
     const resp = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       messages: [{
         role: 'user',

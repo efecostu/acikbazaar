@@ -8,11 +8,10 @@ import Anthropic from '@anthropic-ai/sdk';
  *  2. ANTHROPIC_API_KEY           → Claude
  *  3. hiçbiri                     → null (çağıran taraf şablon havuzuna düşer)
  *
- * Örnek (Qwen Flash, Alibaba Model Studio uluslararası):
- *   LLM_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
- *   LLM_API_KEY=sk-...
- *   LLM_MODEL=qwen-flash
- * Örnek (OpenRouter): LLM_BASE_URL=https://openrouter.ai/api/v1  LLM_MODEL=qwen/qwen-turbo
+ * Örnek (OpenRouter, test edildi 2026-09-18; Türkçe sözlük ağzında en iyi ucuz model):
+ *   LLM_BASE_URL=https://openrouter.ai/api/v1
+ *   LLM_API_KEY=sk-or-...
+ *   LLM_MODEL=google/gemini-2.5-flash-lite      (~0,00005 $/yorum; deepseek/deepseek-chat-v3.1 daha "insan", 4 kat pahalı)
  */
 export interface ChatOpts { maxTokens?: number; temperature?: number; system?: string }
 
@@ -31,9 +30,9 @@ export async function chat(prompt: string, opts: ChatOpts = {}): Promise<string>
     const base = process.env.LLM_BASE_URL!.replace(/\/+$/, '');
     const res = await fetch(`${base}/chat/completions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.LLM_API_KEY}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.LLM_API_KEY}`, 'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL ?? 'https://acikbazaar.com', 'X-Title': 'AcikBazaar' },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL ?? 'qwen-flash',
+        model: process.env.LLM_MODEL ?? 'google/gemini-2.5-flash-lite',
         max_tokens: maxTokens,
         temperature,
         messages: [

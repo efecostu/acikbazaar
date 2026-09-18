@@ -106,7 +106,7 @@ outcome: true = YES happened, false = NO. If the deadline passed and the event d
 If you cannot determine with confidence >= 0.7, set outcome to null.`;
 
       const response = await client.beta.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         betas: ['web-search-2025-03-05'],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
@@ -178,7 +178,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
 - Be conservative: when in doubt, leave the market out. Return [] if none are decided.`;
 
       const response = await client.beta.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
         betas: ['web-search-2025-03-05'],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],

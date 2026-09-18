@@ -62,7 +62,7 @@ export async function generateMarkets(
   const existingList = (existing ?? []).map((m) => `- ${m.title_tr}`).join('\n');
 
   const response = await client.beta.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
     max_tokens: 3000,
     betas: ['web-search-2025-03-05'],
     tools: [{ type: 'web_search_20250305', name: 'web_search' }],
