@@ -54,6 +54,18 @@ export async function resolveMarketMulti(marketId: string, winningOptionId: stri
 }
 
 /** Süresi dolmuş ama çözülememiş marketi "sonuç bekleniyor" (closed) durumuna al / geri aç. */
+/** Yanlış çözülmüş marketi geri aç: ödemeler iade edilir, bahisler pending'e döner. */
+export async function unsettleMarketAction(marketId: string) {
+  const { unsettleMarket } = await import('@/lib/settle');
+  const supabase = await createAdminClient();
+  const r = await unsettleMarket(supabase, marketId);
+  revalidatePath('/admin/markets');
+  revalidatePath(`/admin/markets/${marketId}`);
+  revalidatePath('/markets');
+  revalidatePath(`/markets/${marketId}`);
+  return r;
+}
+
 export async function setMarketStatus(marketId: string, status: 'active' | 'closed') {
   const supabase = await createAdminClient();
   await supabase.from('markets').update({ status }).eq('id', marketId);

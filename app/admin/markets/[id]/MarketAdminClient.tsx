@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCredits, formatDate, categoryLabel } from '@/lib/utils';
-import { updateMarket, resolveMarket, resolveMarketMulti, deleteMarket } from '@/app/admin/_actions';
+import { updateMarket, resolveMarket, resolveMarketMulti, deleteMarket, unsettleMarketAction } from '@/app/admin/_actions';
 import type { Market, MarketOption } from '@/types';
 
 interface BetWithUser {
@@ -70,6 +70,15 @@ export function MarketAdminClient({ market, bets, options = [] }: Props) {
     setSaving(true);
     const res = await resolveMarketMulti(market.id, optionId);
     setMsg(res && 'error' in res ? `Hata: ${res.error}` : `Kapatıldı — kazanan: ${label} ✓ (${res?.winners ?? 0} kazanan)`);
+    setSaving(false);
+    router.refresh();
+  }
+
+  async function handleUnsettle() {
+    if (!confirm('Çözümü geri al: kazananlardan ödeme iade alınır, tüm bahisler tekrar beklemeye döner. Devam?')) return;
+    setSaving(true);
+    const r = await unsettleMarketAction(market.id);
+    setMsg(`Geri açıldı — ${r.reverted} bahis beklemeye döndü`);
     setSaving(false);
     router.refresh();
   }
@@ -212,6 +221,19 @@ export function MarketAdminClient({ market, bets, options = [] }: Props) {
               </div>
             )}
           </div>
+
+          {market.status === 'resolved' && (
+            <div className="bg-white border border-amber-200 rounded-xl p-5">
+              <h2 className="text-sm font-bold text-[#111827] mb-0.5">Çözümü geri al</h2>
+              <p className="text-xs text-[#9CA3AF] mb-3">
+                Yanlış kapandıysa: {won.length} kazanan ödemesi iade alınır, {won.length + lost.length} bahis beklemeye döner.
+              </p>
+              <button onClick={handleUnsettle} disabled={saving}
+                className="py-2.5 px-4 rounded-xl border-2 border-amber-400 bg-amber-50 text-amber-700 font-bold text-sm hover:bg-amber-100 disabled:opacity-50 transition-colors">
+                Geri aç
+              </button>
+            </div>
+          )}
 
           {/* Resolve */}
           {market.status !== 'resolved' && (

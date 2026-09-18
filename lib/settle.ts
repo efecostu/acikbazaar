@@ -120,3 +120,46 @@ export async function settleMarket(
 
   return { winners, losers, betsSettled: bets?.length ?? 0, wins };
 }
+
+/**
+ * Yanlış çözülmüş bir marketi geri açar: kazananlardan ödemeyi ve total_won'u geri alır,
+ * tüm bahisleri pending'e döndürür, marketi active yapar. Bitiş tarihi geçmişse 'closed' yapar.
+ */
+export async function unsettleMarket(admin: SupabaseClient, marketId: string): Promise<{ reverted: number }> {
+  const { data: market } = await admin.from('markets').select('id, status, ends_at').eq('id', marketId).single();
+  if (!market) throw new Error('market_not_found');
+  if (market.status !== 'resolved') return { reverted: 0 };
+
+  const { data: bets } = await admin
+    .from('bets')
+    .select('id, user_id, potential_payout, status')
+    .eq('market_id', marketId)
+    .in('status', ['won', 'lost']);
+
+  let reverted = 0;
+  for (const bet of bets ?? []) {
+    if (bet.status === 'won') {
+      // Ödemeyi geri al: balance -= payout, total_won -= 1
+      const { data: prof } = await admin.from('profiles').select('balance, total_won').eq('id', bet.user_id).single();
+      if (prof) {
+        await admin.from('profiles').update({
+          balance: prof.balance - bet.potential_payout,
+          total_won: Math.max(0, (prof.total_won ?? 0) - 1),
+        }).eq('id', bet.user_id);
+      }
+    }
+    await admin.from('bets').update({ status: 'pending', settled_at: null }).eq('id', bet.id);
+    reverted++;
+  }
+
+  const stillOpen = new Date(market.ends_at).getTime() > Date.now();
+  await admin.from('markets').update({
+    status: stillOpen ? 'active' : 'closed',
+    outcome: null,
+    winning_option_id: null,
+    resolved_at: null,
+    resolution_note: null,
+  }).eq('id', marketId);
+
+  return { reverted };
+}

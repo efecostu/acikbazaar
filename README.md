@@ -80,6 +80,13 @@ Son 150 bahsi listeler: saat (TRT), kim (bot/kullanıcı ikonu), market, taraf, 
 
 `supabase-migration-9.sql` iki şey yapar: kullanıcı adı kısıtını düzeltir (e-posta biçimli eski adları temizler, bot isimlerine izin verir; bu kısıt yüzünden bahis sırasında `profiles_username_format` hatası geliyordu) ve sıralamayı canlı hale getirir. `profit` = gerçekleşen kâr + açık pozisyonların güncel orana göre değeri (mark-to-market); botlar oranı oynattıkça tablo değişir.
 
+## Modeller ve maliyet
+
+- Bot yorumları: `LLM_*` (OpenRouter, `google/gemini-2.5-flash-lite`, ~0,00005 $/yorum).
+- Vadesi gelen market çözümü ve market üretimi: `ANTHROPIC_MODEL` (varsayılan Haiku 4.5) + Anthropic web araması (arama başına 0,01 $).
+- Erken çözüm taraması (günde 1 çağrı, tüm açık marketler): `ANTHROPIC_MODEL_STRONG` (varsayılan Sonnet 4.6). Hata burada pahalı çünkü ödeme dağıtılır; güven eşiği 0,95 ve sert kurallar (gelecekte açıklanacak veri asla erken çözülmez, "yılın en" tipi sorular dönem bitmeden çözülmez).
+- Yanlış çözüm: admin market sayfasında "Geri aç" ödemeleri iade alır ve bahisleri beklemeye döndürür. API: `POST /api/admin/unsettle {market_id}` + `x-admin-secret`.
+
 ## Market yaşam döngüsü
 
 `active` → (ends_at geçti) → cron çözer → `resolved` (bahisler ödenir, `resolution_note` yazılır)

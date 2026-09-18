@@ -167,6 +167,13 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
 
 Your job: identify which of them are ALREADY DECIDED — the outcome is now certain regardless of what happens before the end date. Example: "Will Antalya see 40°C in July?" is decided YES the moment 40°C is recorded, even if July isn't over. A market is NOT decided if the event could still go either way.
 
+HARD RULES (violating any of these is a serious error):
+1. Data that will be PUBLISHED in the future cannot be known today. If a market depends on a scheduled release (CPI, GDP, central bank decision, election result, award announcement, match result), it is NOT decided until that release has actually happened and you found the published figure with its publication date. Never infer or estimate the figure.
+2. "Top of the year", "highest of 2026", "leader at end of 2026", "before end of 2026" type markets are NOT decided while the period is still running, unless it is mathematically impossible for the outcome to change (explain the math).
+3. A NO outcome before the end date is only valid if the event is now impossible (e.g. the only qualifying date has passed).
+4. Every entry must cite a concrete source (site name + date). No source, no entry.
+5. If you are not certain today's date is after the deciding event, leave it out.
+
 Markets:
 ${listing}
 
@@ -177,8 +184,9 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
 - "winning_index": option index for multi-option markets, null otherwise
 - Be conservative: when in doubt, leave the market out. Return [] if none are decided.`;
 
+      // Erken çözüm hatası pahalı (ödeme dağıtılır) → bu tek çağrıda daha güçlü model kullan
       const response = await client.beta.messages.create({
-        model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
+        model: process.env.ANTHROPIC_MODEL_STRONG ?? 'claude-sonnet-4-6',
         max_tokens: 2000,
         betas: ['web-search-2025-03-05'],
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
@@ -192,7 +200,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
 
       for (const v of Array.isArray(verdicts) ? verdicts : []) {
         const entry = openWithOptions[v.index];
-        if (!entry || v.confidence < 0.9) continue;
+        if (!entry || v.confidence < 0.95) continue;
         const { m, options } = entry;
         const isMulti = !!options && options.length > 0;
         const winningOption = isMulti && v.winning_index !== null && options![v.winning_index] ? options![v.winning_index] : null;
