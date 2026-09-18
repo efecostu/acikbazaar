@@ -65,7 +65,7 @@ function extractJson(text: string): unknown {
  *  (b) hâlâ açık marketler → şimdiden kesinleşen var mı? (erken çözüm)
  *  (c) açık market sayısını hedefe tamamla (top-up)
  */
-export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean } = {}): Promise<SweepResult> {
+export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean; forceEarly?: boolean } = {}): Promise<SweepResult> {
   const client = new Anthropic();
   const nowIso = new Date().toISOString();
   const currentYear = new Date().getFullYear();
@@ -134,7 +134,7 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
         model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
         betas: ['web-search-2025-03-05'],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }], // maliyet kapağı: market başına en fazla 3 arama
         messages: [{ role: 'user', content: prompt }],
       });
 
@@ -188,6 +188,14 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
         return `${i}. [ends ${m.ends_at.slice(0, 10)}] ${m.title_tr} / ${m.title_en}${m.description_tr ? `\n   Criteria: ${m.description_tr}` : ''}${opts}`;
       }).join('\n');
 
+      // Maliyet: erken tarama her gün değil, Pazartesi ve Perşembe (EARLY_SCAN_DAYS ile değiştirilebilir, ör. "1,2,3,4,5")
+      const scanDays = (process.env.EARLY_SCAN_DAYS ?? '1,4').split(',').map((d) => parseInt(d.trim()));
+      const dow = new Date().getUTCDay();
+      if (!scanDays.includes(dow) && !opts.forceEarly) {
+        results.push({ path: 'early', status: 'skipped', reason: `erken tarama günü değil (gün ${dow}; EARLY_SCAN_DAYS=${scanDays.join(',')})` });
+        throw new Error('__skip_early__');
+      }
+
       const earlyPrompt = `Today is ${nowIso.slice(0, 10)}. Below are ACTIVE prediction markets that have NOT reached their end date yet.
 
 Your job: identify which of them are ALREADY DECIDED — the outcome is now certain regardless of what happens before the end date. Example: "Will Antalya see 40°C in July?" is decided YES the moment 40°C is recorded, even if July isn't over. A market is NOT decided if the event could still go either way.
@@ -214,7 +222,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
         model: process.env.ANTHROPIC_MODEL_STRONG ?? 'claude-sonnet-4-6',
         max_tokens: 2000,
         betas: ['web-search-2025-03-05'],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 8 }], // maliyet kapağı: erken tarama en fazla 8 arama
         messages: [{ role: 'user', content: earlyPrompt }],
       });
 
@@ -246,7 +254,8 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
         });
       }
     } catch (err) {
-      results.push({ path: 'early', status: 'error', reason: String(err) });
+      if (String(err).includes('__skip_early__')) { /* planlı atlama */ }
+      else results.push({ path: 'early', status: 'error', reason: String(err) });
       if (isBillingError(err)) billingBlocked = true;
     }
   }

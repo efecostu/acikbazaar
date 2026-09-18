@@ -65,7 +65,7 @@ export async function generateMarkets(
     model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
     max_tokens: 3000,
     betas: ['web-search-2025-03-05'],
-    tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }], // maliyet kapağı
     messages: [{
       role: 'user',
       content: `Today is ${today}. You are generating prediction markets for AçıkBazaar (free simulation, no real money).

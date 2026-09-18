@@ -89,6 +89,7 @@ Son 150 bahsi listeler: saat (TRT), kim (bot/kullanıcı ikonu), market, taraf, 
 - Bot yorumları: `LLM_*` (OpenRouter, `google/gemini-2.5-flash-lite`, ~0,00005 $/yorum).
 - Vadesi gelen market çözümü ve market üretimi: `ANTHROPIC_MODEL` (varsayılan Haiku 4.5) + Anthropic web araması (arama başına 0,01 $).
 - Erken çözüm taraması (günde 1 çağrı, tüm açık marketler): `ANTHROPIC_MODEL_STRONG` (varsayılan Sonnet 4.6). Hata burada pahalı çünkü ödeme dağıtılır; güven eşiği 0,95 ve sert kurallar (gelecekte açıklanacak veri asla erken çözülmez, "yılın en" tipi sorular dönem bitmeden çözülmez).
+- Maliyet kapakları: vadesi gelen market başına en fazla 3 arama, erken tarama en fazla 8 arama, üretim batch'i en fazla 4 arama. Erken tarama yalnızca Pazartesi ve Perşembe çalışır (`EARLY_SCAN_DAYS`, UTC gün numaraları, 0=Pazar). Tahmini günlük maliyet: 0,05-0,20 $; erken tarama günlerinde +0,15 $.
 - Yanlış çözüm: admin market sayfasında "Geri aç" ödemeleri iade alır ve bahisleri beklemeye döndürür. API: `POST /api/admin/unsettle {market_id}` + `x-admin-secret`.
 
 ## Market yaşam döngüsü
