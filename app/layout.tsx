@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Inter_Tight, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { LangProvider } from '@/contexts/LangContext';
@@ -18,8 +18,22 @@ const mono = IBM_Plex_Mono({
   variable: '--font-mono',
 });
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F7F6F2' },
+    { media: '(prefers-color-scheme: dark)', color: '#0F172A' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: 'AçıkBazaar — Olacak mı, olmayacak mı?',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://acikbazaar.com'),
+  title: {
+    default: 'AçıkBazaar — Olacak mı, olmayacak mı?',
+    template: '%s — AçıkBazaar',
+  },
+  applicationName: 'AçıkBazaar',
   description: 'Türkiye\'nin ücretsiz tahmin pazarı. Gerçek para yok, gerçek hayat eventleri var. Sanal kredinle tahmin et, toplulukla yarış.',
   openGraph: {
     title: 'AçıkBazaar',
@@ -29,6 +43,12 @@ export const metadata: Metadata = {
     locale: 'tr_TR',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AçıkBazaar — Olacak mı, olmayacak mı?',
+    description: 'Türkiye\'nin ücretsiz tahmin pazarı. Sanal kredinle tahmin et, toplulukla yarış.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

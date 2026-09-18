@@ -72,18 +72,48 @@ export default async function LandingPage() {
 
   let loggedIn = false;
   let markets: Market[] = DEMO_MARKETS;
+  let stats = { bets: 0, volume: 0, users: 0, active: 0 };
 
   if (!isDemoMode) {
     const supabase = await createClient();
-    const [{ data: { user } }, { data: liveMarkets }] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [{ data: { user } }, { data: liveMarkets }, { data: rpcStats }, { count: betCount }, { count: userCount }] = await Promise.all([
       supabase.auth.getUser(),
       supabase.from('markets').select('*, market_options(*)').eq('status', 'active')
-        .gt('ends_at', new Date().toISOString())
+        .gt('ends_at', nowIso)
         .order('total_volume', { ascending: false }).limit(6),
+      // platform_stats() migration-7 ile gelir; yoksa count sorguları devreye girer
+      supabase.rpc('platform_stats'),
+      supabase.from('bets').select('id', { count: 'exact', head: true }),
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
     ]);
     loggedIn = !!user;
     if (liveMarkets && liveMarkets.length > 0) markets = liveMarkets;
+
+    const rs = rpcStats as { bets?: number; volume?: number; users?: number; active?: number } | null;
+    const volumeFallback = (liveMarkets ?? []).reduce((s, m) => s + (m.total_volume ?? 0), 0);
+    stats = {
+      bets: rs?.bets ?? betCount ?? 0,
+      volume: rs?.volume ?? volumeFallback,
+      users: rs?.users ?? userCount ?? 0,
+      active: rs?.active ?? (liveMarkets?.length ?? 0),
+    };
   }
+
+  const compact = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1).replace('.0', '')}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : `${n}`;
+  const statItems = isDemoMode
+    ? [
+        { val: '10K+', label: 'Aktif tahmin' },
+        { val: '◈4.8M', label: 'İşlem hacmi' },
+        { val: '%100', label: 'Ücretsiz' },
+        { val: '7', label: 'Kategori' },
+      ]
+    : [
+        { val: compact(stats.bets), label: 'Tahmin yapıldı' },
+        { val: `◈${compact(stats.volume)}`, label: 'İşlem hacmi' },
+        { val: `${stats.active}`, label: 'Açık market' },
+        { val: '%100', label: 'Ücretsiz' },
+      ];
 
   // Gerçek marketler varsa kartlar doğrudan detay sayfasına gider (marketler public);
   // demo fallback'te sahte ID'ler 404 vermesin diye listeye yönlendirilir
@@ -184,12 +214,7 @@ export default async function LandingPage() {
         {/* Stats bandı — beyaz şerit, üst/alt çizgili */}
         <div className="border-y border-[var(--border)] bg-[var(--surface)]">
           <div className="max-w-7xl mx-auto px-4 flex gap-10 py-6 flex-wrap">
-            {[
-              { val: '10K+', label: 'Aktif tahmin' },
-              { val: '◈4.8M', label: 'İşlem hacmi' },
-              { val: '%100', label: 'Ücretsiz' },
-              { val: '7', label: 'Kategori' },
-            ].map((s) => (
+            {statItems.map((s) => (
               <div key={s.label}>
                 <div className="font-data text-xl font-semibold text-[var(--ink)]">{s.val}</div>
                 <div className="text-xs text-[var(--ink-3)] mt-0.5">{s.label}</div>

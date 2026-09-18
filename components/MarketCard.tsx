@@ -19,6 +19,7 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const { yesProb, yesOdds, noOdds } = calculateOdds(market.yes_pool, market.no_pool);
   const yesPct = Math.round(yesProb * 100);
   const days = daysUntil(market.ends_at);
+  const awaiting = market.status === 'closed' || (market.status === 'active' && new Date(market.ends_at).getTime() <= Date.now());
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const catColor = categoryColor(market.category);
   const link = href ?? `/markets/${market.id}`;
@@ -43,9 +44,15 @@ export function MarketCard({ market, href }: MarketCardProps) {
               </span>
             )}
           </div>
-          <span className={`font-data text-[11px] shrink-0 ${days <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
-            {days}{t('g', 'd')}
-          </span>
+          {awaiting ? (
+            <span className="font-data text-[10px] uppercase tracking-wider shrink-0 px-2 py-0.5 rounded-md bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
+              {t('sonuç bekleniyor', 'awaiting result')}
+            </span>
+          ) : (
+            <span className={`font-data text-[11px] shrink-0 ${days <= 7 ? 'text-[var(--fall)]' : 'text-[var(--ink-3)]'}`}>
+              {days}{t('g', 'd')}
+            </span>
+          )}
         </div>
 
         {/* Başlık + olasılık */}

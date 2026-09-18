@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -10,12 +10,28 @@ import { Input } from '@/components/ui/Input';
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL
   || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo.supabase.co');
 
+const ERROR_MAP: [string, string][] = [
+  ['Invalid login credentials', 'E-posta veya şifre hatalı.'],
+  ['Email not confirmed', 'E-posta adresin henüz doğrulanmamış. Gelen kutundaki bağlantıya tıkla.'],
+  ['rate limit', 'Çok fazla deneme yaptın. Biraz bekleyip tekrar dene.'],
+  ['invalid format', 'E-posta adresi geçersiz görünüyor.'],
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [next, setNext] = useState<string | null>(null);
+
+  // Sayfa statik kalsın diye query string'i tarayıcıda oku
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error') === 'link') setError('Bağlantı geçersiz ya da süresi dolmuş. Tekrar dene.');
+    const n = params.get('next');
+    if (n && n.startsWith('/') && !n.startsWith('//')) setNext(n);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,19 +43,25 @@ export default function LoginPage() {
     setError('');
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setError(error.message); setLoading(false); }
-    else { router.push('/markets'); router.refresh(); }
+    if (error) {
+      const friendly = ERROR_MAP.find(([k]) => error.message.includes(k));
+      setError(friendly ? friendly[1] : error.message);
+      setLoading(false);
+    } else {
+      router.push(next ?? '/markets');
+      router.refresh();
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--paper)] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <span className="text-[#16A34A] font-bold text-2xl">◈</span>
-            <span className="text-xl font-bold text-[#111827]">AçıkBazaar</span>
+            <span className="text-[var(--rise)] font-bold text-2xl">◈</span>
+            <span className="font-display text-xl font-bold text-[var(--ink)]">AçıkBazaar</span>
           </Link>
-          <p className="text-sm text-[#6B7280] mt-2">Açıkça tahmin et. Özgürce oyna.</p>
+          <p className="text-sm text-[var(--ink-2)] mt-2">Açıkça tahmin et. Özgürce oyna.</p>
         </div>
 
         {IS_DEMO && (
@@ -49,8 +71,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#111827] mb-5">Giriş Yap</h2>
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+          <h2 className="font-display text-lg font-bold text-[var(--ink)] mb-5">Giriş Yap</h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input id="email" type="email" label="E-posta" placeholder="kullanici@email.com"
@@ -59,7 +81,7 @@ export default function LoginPage() {
               value={password} onChange={(e) => setPassword(e.target.value)} required />
 
             {error && (
-              <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="text-sm text-[var(--fall)] bg-[var(--fall-soft)] border border-[var(--fall-line)] rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -69,12 +91,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#6B7280] mt-4">
+          <p className="text-center text-xs text-[var(--ink-3)] mt-3">
+            <Link href="/forgot-password" className="hover:text-[var(--ink)] hover:underline">Şifremi unuttum</Link>
+          </p>
+          <p className="text-center text-sm text-[var(--ink-2)] mt-3">
             Hesabın yok mu?{' '}
-            <Link href="/register" className="text-[#16A34A] font-semibold hover:underline">Kayıt Ol</Link>
+            <Link href="/register" className="text-[var(--rise)] font-semibold hover:underline">Kayıt Ol</Link>
           </p>
         </div>
       </div>
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { formatCredits, formatDate } from '@/lib/utils';
+import { OpsPanel } from './OpsPanel';
+import { TARGET_ACTIVE_MARKETS } from '@/lib/generate';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +17,7 @@ export default async function AdminDashboard() {
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('bets').select('*', { count: 'exact', head: true }),
-    supabase.from('markets').select('id, title_en, total_volume, status, ends_at, participant_count, outcome'),
+    supabase.from('markets').select('id, title_en, total_volume, status, ends_at, participant_count, outcome, resolved_at'),
     supabase.from('bets')
       .select('id, side, amount, potential_payout, status, odds_at_bet, profiles(username), markets(id, title_en)')
       .order('created_at', { ascending: false })
@@ -25,6 +27,16 @@ export default async function AdminDashboard() {
   const totalVolume = markets?.reduce((s, m) => s + (m.total_volume ?? 0), 0) ?? 0;
   const activeMarkets = markets?.filter(m => m.status === 'active') ?? [];
   const resolvedMarkets = markets?.filter(m => m.status === 'resolved') ?? [];
+
+  const nowMs = Date.now();
+  const overdue = activeMarkets.filter((m) => new Date(m.ends_at).getTime() <= nowMs).length;
+  const awaiting = (markets?.filter((m) => m.status === 'closed').length ?? 0) + overdue;
+  const openCount = activeMarkets.length - overdue;
+  const lastResolvedAt = resolvedMarkets
+    .map((m) => (m as { resolved_at?: string | null }).resolved_at)
+    .filter((d): d is string => !!d)
+    .sort()
+    .at(-1) ?? null;
 
   const expiringSoon = activeMarkets.filter((m) => {
     const days = (new Date(m.ends_at).getTime() - Date.now()) / 864e5;
@@ -41,7 +53,7 @@ export default async function AdminDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Aktif Market',     value: activeMarkets.length,           icon: '📋', color: '#16A34A' },
+          { label: 'Açık Market',      value: openCount,                      icon: '📋', color: '#16A34A' },
           { label: 'Toplam Kullanıcı', value: totalUsers ?? 0,                icon: '👥', color: '#3B82F6' },
           { label: 'Toplam Bahis',     value: totalBets ?? 0,                 icon: '🎯', color: '#8B5CF6' },
           { label: 'İşlem Hacmi',      value: `◈${formatCredits(totalVolume)}`, icon: '💰', color: '#F59E0B' },
@@ -53,6 +65,18 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      <OpsPanel
+        overdue={overdue}
+        awaiting={awaiting}
+        openCount={openCount}
+        target={TARGET_ACTIVE_MARKETS}
+        lastResolvedAt={lastResolvedAt}
+        cronSecretSet={!!process.env.CRON_SECRET}
+        resendSet={!!process.env.RESEND_API_KEY}
+        anthropicSet={!!process.env.ANTHROPIC_API_KEY}
+        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? null}
+      />
 
       {/* Expiring soon warning */}
       {expiringSoon.length > 0 && (

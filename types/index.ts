@@ -46,6 +46,8 @@ export interface Market {
   tag: string | null;
   kind?: MarketKind;
   winning_option_id?: string | null;
+  resolved_at?: string | null;
+  resolution_note?: string | null;
   market_options?: MarketOption[];
   created_at: string;
 }

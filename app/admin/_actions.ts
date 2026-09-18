@@ -3,6 +3,10 @@
 import { createAdminClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendWinEmails } from '@/lib/notify';
+import { settleMarket } from '@/lib/settle';
+import { runResolveSweep } from '@/lib/resolve';
+import { generateMarkets, topUpMarkets } from '@/lib/generate';
+import type { MarketCategory, MarketRegion } from '@/types';
 
 export async function updateMarket(marketId: string, data: {
   title_en?: string;
@@ -19,83 +23,71 @@ export async function updateMarket(marketId: string, data: {
   revalidatePath(`/admin/markets/${marketId}`);
 }
 
-export async function resolveMarket(marketId: string, outcome: boolean) {
+export async function resolveMarket(marketId: string, outcome: boolean, reasoning?: string) {
   const supabase = await createAdminClient();
-
-  const { data: market } = await supabase.from('markets').select('title_tr').eq('id', marketId).single();
-
-  await supabase.from('markets').update({
-    status: 'resolved', outcome, resolved_at: new Date().toISOString(),
-  }).eq('id', marketId);
-
-  const { data: bets } = await supabase
-    .from('bets')
-    .select('*')
-    .eq('market_id', marketId)
-    .eq('status', 'pending');
-
-  const wins: { userId: string; marketTitle: string; amount: number; payout: number; pick: string }[] = [];
-  for (const bet of bets ?? []) {
-    const won = (bet.side === 'yes' && outcome) || (bet.side === 'no' && !outcome);
-    const settled_at = new Date().toISOString();
-    if (won) {
-      await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
-      await supabase.rpc('credit_and_update_user', { p_user_id: bet.user_id, p_amount: bet.potential_payout });
-      wins.push({
-        userId: bet.user_id, marketTitle: market?.title_tr ?? '', amount: bet.amount,
-        payout: bet.potential_payout, pick: bet.side === 'yes' ? 'EVET' : 'HAYIR',
-      });
-    } else {
-      await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
-    }
+  try {
+    const result = await settleMarket(supabase, marketId, { outcome, winningOptionId: null, reasoning: reasoning ?? null });
+    await sendWinEmails(supabase, result.wins);
+    revalidatePath('/admin/markets');
+    revalidatePath(`/admin/markets/${marketId}`);
+    revalidatePath(`/markets/${marketId}`);
+    revalidatePath('/markets');
+    return { success: true, winners: result.winners, losers: result.losers };
+  } catch (err) {
+    return { error: String(err) };
   }
-  await sendWinEmails(supabase, wins);
-
-  revalidatePath('/admin/markets');
-  revalidatePath(`/admin/markets/${marketId}`);
 }
 
-
-export async function resolveMarketMulti(marketId: string, winningOptionId: string) {
+export async function resolveMarketMulti(marketId: string, winningOptionId: string, reasoning?: string) {
   const supabase = await createAdminClient();
-
-  const [{ data: market }, { data: option }] = await Promise.all([
-    supabase.from('markets').select('title_tr').eq('id', marketId).single(),
-    supabase.from('market_options').select('label_tr').eq('id', winningOptionId).single(),
-  ]);
-  if (!option) return { error: 'Seçenek bulunamadı.' };
-
-  await supabase.from('markets').update({
-    status: 'resolved', outcome: null, winning_option_id: winningOptionId,
-    resolved_at: new Date().toISOString(),
-  }).eq('id', marketId);
-
-  const { data: bets } = await supabase
-    .from('bets')
-    .select('*')
-    .eq('market_id', marketId)
-    .eq('status', 'pending');
-
-  const wins: { userId: string; marketTitle: string; amount: number; payout: number; pick: string }[] = [];
-  for (const bet of bets ?? []) {
-    const won = bet.option_id === winningOptionId;
-    const settled_at = new Date().toISOString();
-    if (won) {
-      await supabase.from('bets').update({ status: 'won', settled_at }).eq('id', bet.id);
-      await supabase.rpc('credit_and_update_user', { p_user_id: bet.user_id, p_amount: bet.potential_payout });
-      wins.push({
-        userId: bet.user_id, marketTitle: market?.title_tr ?? '', amount: bet.amount,
-        payout: bet.potential_payout, pick: option.label_tr,
-      });
-    } else {
-      await supabase.from('bets').update({ status: 'lost', settled_at }).eq('id', bet.id);
-    }
+  try {
+    const result = await settleMarket(supabase, marketId, { outcome: null, winningOptionId, reasoning: reasoning ?? null });
+    await sendWinEmails(supabase, result.wins);
+    revalidatePath('/admin/markets');
+    revalidatePath(`/admin/markets/${marketId}`);
+    revalidatePath(`/markets/${marketId}`);
+    revalidatePath('/markets');
+    return { success: true, winners: result.winners, losers: result.losers };
+  } catch (err) {
+    return { error: String(err) };
   }
-  await sendWinEmails(supabase, wins);
+}
 
+/** Süresi dolmuş ama çözülememiş marketi "sonuç bekleniyor" (closed) durumuna al / geri aç. */
+export async function setMarketStatus(marketId: string, status: 'active' | 'closed') {
+  const supabase = await createAdminClient();
+  await supabase.from('markets').update({ status }).eq('id', marketId);
   revalidatePath('/admin/markets');
   revalidatePath(`/admin/markets/${marketId}`);
-  return { success: true };
+  revalidatePath('/markets');
+}
+
+/** Günlük cron'un yaptığı taramayı admin panelinden anında çalıştır. */
+export async function runResolveNow() {
+  const supabase = await createAdminClient();
+  try {
+    const result = await runResolveSweep(supabase);
+    revalidatePath('/admin');
+    revalidatePath('/admin/markets');
+    revalidatePath('/markets');
+    return { success: true, ...result };
+  } catch (err) {
+    return { error: String(err) };
+  }
+}
+
+/** Açık market sayısını hedefe tamamla (AI üretimi). */
+export async function topUpNow() {
+  const supabase = await createAdminClient();
+  try {
+    const result = await topUpMarkets(supabase);
+    revalidatePath('/admin');
+    revalidatePath('/admin/markets');
+    revalidatePath('/markets');
+    return { success: true, ...result };
+  } catch (err) {
+    return { error: String(err) };
+  }
 }
 
 export async function createMultiMarket(data: {
@@ -259,16 +251,18 @@ export async function rejectSuggestion(suggestionId: string) {
 }
 
 export async function generateMarketWithAI(category: string, region: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/ai/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-admin-secret': process.env.ADMIN_SECRET!,
-    },
-    body: JSON.stringify({ region, category, count: 1 }),
-  });
-  const data = await res.json();
-  revalidatePath('/admin/markets');
-  return data;
+  const supabase = await createAdminClient();
+  try {
+    const result = await generateMarkets(supabase, {
+      category: category as MarketCategory,
+      region: region as MarketRegion,
+      count: 1,
+    });
+    revalidatePath('/admin/markets');
+    revalidatePath('/markets');
+    if (result.inserted.length === 0) return { error: 'Üretilen market doğrulamadan geçemedi.', rejected: result.rejected };
+    return { success: true, markets: result.inserted, rejected: result.rejected };
+  } catch (err) {
+    return { error: String(err) };
+  }
 }

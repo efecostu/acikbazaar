@@ -175,7 +175,7 @@ export default async function MarketsPage() {
     supabase
       .from('markets')
       .select('*, market_options(*)')
-      .eq('status', 'active')
+      .in('status', ['active', 'closed'])
       .order('created_at', { ascending: false }),
     user
       ? supabase.from('profiles').select('interests').eq('id', user.id).single()

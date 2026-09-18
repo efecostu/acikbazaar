@@ -76,11 +76,12 @@ export default function NewMarketPage() {
     setAiLoading(true); setMsg('');
     try {
       const data = await generateMarketWithAI(form.category, form.region);
-      if (data.markets?.length > 0) {
-        setMsg(`✓ ${data.markets.length} market üretildi ve kaydedildi.`);
+      const produced = 'markets' in data ? (data.markets?.length ?? 0) : 0;
+      if (produced > 0) {
+        setMsg(`✓ ${produced} market üretildi ve kaydedildi.`);
         setTimeout(() => router.push('/admin/markets'), 1200);
       } else {
-        setMsg('Market üretilemedi. Tekrar dene.');
+        setMsg('error' in data && data.error ? `Market üretilemedi: ${data.error}` : 'Market üretilemedi. Tekrar dene.');
       }
     } catch {
       setMsg('Hata oluştu.');

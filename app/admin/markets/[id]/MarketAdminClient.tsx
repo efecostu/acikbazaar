@@ -58,8 +58,8 @@ export function MarketAdminClient({ market, bets, options = [] }: Props) {
     const pending = bets.filter(b => b.status === 'pending').length;
     if (!confirm(`Market "${outcome ? 'EVET' : 'HAYIR'}" olarak kapatılsın mı?\n${pending} bekleyen bahis etkilenecek.`)) return;
     setSaving(true);
-    await resolveMarket(market.id, outcome);
-    setMsg(`Market ${outcome ? 'EVET ✓' : 'HAYIR ✓'} olarak kapatıldı`);
+    const res = await resolveMarket(market.id, outcome);
+    setMsg(res && 'error' in res ? `Hata: ${res.error}` : `Market ${outcome ? 'EVET ✓' : 'HAYIR ✓'} olarak kapatıldı — ${res?.winners ?? 0} kazanan, ${res?.losers ?? 0} kaybeden`);
     setSaving(false);
     router.refresh();
   }
@@ -68,8 +68,8 @@ export function MarketAdminClient({ market, bets, options = [] }: Props) {
     const pending = bets.filter(b => b.status === 'pending').length;
     if (!confirm(`"${label}" kazanan seçenek olarak işaretlensin mi?\n${pending} bekleyen bahis etkilenecek.`)) return;
     setSaving(true);
-    await resolveMarketMulti(market.id, optionId);
-    setMsg(`Kapatıldı — kazanan: ${label} ✓`);
+    const res = await resolveMarketMulti(market.id, optionId);
+    setMsg(res && 'error' in res ? `Hata: ${res.error}` : `Kapatıldı — kazanan: ${label} ✓ (${res?.winners ?? 0} kazanan)`);
     setSaving(false);
     router.refresh();
   }
@@ -203,16 +203,18 @@ export function MarketAdminClient({ market, bets, options = [] }: Props) {
           {/* Close date info */}
           <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-4 text-sm">
             <div className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1">Kapanış Tarihi</div>
-            <div className={`font-semibold ${new Date(market.ends_at) < new Date() && market.status === 'active' ? 'text-red-500' : 'text-[#374151]'}`}>
+            <div className={`font-semibold ${new Date(market.ends_at) < new Date() && market.status !== 'resolved' ? 'text-red-500' : 'text-[#374151]'}`}>
               {formatDate(market.ends_at, 'tr')}
             </div>
-            {new Date(market.ends_at) < new Date() && market.status === 'active' && (
-              <div className="text-xs text-red-400 mt-1">⚠ Süresi doldu, resolve bekliyor</div>
+            {new Date(market.ends_at) < new Date() && market.status !== 'resolved' && (
+              <div className="text-xs text-red-400 mt-1">
+                ⚠ {market.status === 'closed' ? 'Sonuç bekleniyor — cron karar veremedi, elle kapat' : 'Süresi doldu, çözüm bekliyor'}
+              </div>
             )}
           </div>
 
           {/* Resolve */}
-          {market.status === 'active' && (
+          {market.status !== 'resolved' && (
             <div className="bg-white border border-[#E5E7EB] rounded-xl p-5">
               <h2 className="text-sm font-bold text-[#111827] mb-0.5">⚖️ Manuel Kapat</h2>
               <p className="text-xs text-[#9CA3AF] mb-4">

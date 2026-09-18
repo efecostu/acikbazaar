@@ -68,6 +68,9 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
   }, [market.id]);
 
   const isMulti = market.kind === 'multi' && options.length > 0;
+  const expired = new Date(market.ends_at).getTime() <= Date.now();
+  const awaiting = market.status === 'closed' || (market.status === 'active' && expired);
+  const isOpen = market.status === 'active' && !expired;
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const description = lang === 'tr' ? market.description_tr : market.description_en;
 
@@ -233,7 +236,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       {!isMulti && <AIFavorites favorites={getAIFavorites(market.id, yesProb)} />}
 
       {/* Anonim kullanıcı: bahis için giriş CTA */}
-      {market.status === 'active' && !userId && (
+      {isOpen && !userId && (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 text-center flex flex-col gap-3 transition-colors duration-200">
           <h2 className="font-display text-base font-bold text-[var(--ink)]">
             {t('Sen olsan ne derdin?', 'What would you say?')}
@@ -253,7 +256,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       )}
 
       {/* Bet panel */}
-      {market.status === 'active' && !!userId && (
+      {isOpen && !!userId && (
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 flex flex-col gap-5 transition-colors duration-200">
           <h2 className="font-display text-base font-bold text-[var(--ink)]">{t('Tahminini Koy', 'Place Your Bet')}</h2>
 
@@ -345,16 +348,35 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
         </div>
       )}
 
-      {market.status === 'resolved' && (
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 text-center text-sm">
-          <span className="text-[var(--ink-2)]">{t('Sonuç', 'Outcome')}: </span>
-          <span className={`font-bold ${isMulti || market.outcome ? 'text-[var(--rise)]' : 'text-[var(--fall)]'}`}>
-            {isMulti
-              ? (lang === 'tr'
-                  ? options.find((o) => o.id === market.winning_option_id)?.label_tr
-                  : options.find((o) => o.id === market.winning_option_id)?.label_en) ?? '—'
-              : market.outcome ? t('EVET', 'YES') : t('HAYIR', 'NO')}
+      {awaiting && (
+        <div className="bg-[var(--copper-soft)] border border-[var(--copper-line)] rounded-2xl p-5 text-center flex flex-col gap-1">
+          <span className="font-data text-[11px] uppercase tracking-[0.18em] text-[var(--copper)]">
+            {t('sonuç bekleniyor', 'awaiting result')}
           </span>
+          <p className="text-sm text-[var(--ink-2)]">
+            {t('Bu market kapandı; sonuç doğrulanınca bahisler otomatik ödenir.', 'This market has closed; bets are paid out automatically once the outcome is verified.')}
+          </p>
+        </div>
+      )}
+
+      {market.status === 'resolved' && (
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 flex flex-col gap-2 text-center">
+          <div className="text-sm">
+            <span className="text-[var(--ink-2)]">{t('Sonuç', 'Outcome')}: </span>
+            <span className={`font-bold ${isMulti || market.outcome ? 'text-[var(--rise)]' : 'text-[var(--fall)]'}`}>
+              {isMulti
+                ? (lang === 'tr'
+                    ? options.find((o) => o.id === market.winning_option_id)?.label_tr
+                    : options.find((o) => o.id === market.winning_option_id)?.label_en) ?? '—'
+                : market.outcome ? t('EVET', 'YES') : t('HAYIR', 'NO')}
+            </span>
+          </div>
+          {market.resolution_note && (
+            <p className="text-xs text-[var(--ink-3)] leading-relaxed">{market.resolution_note}</p>
+          )}
+          {market.resolved_at && (
+            <p className="font-data text-[11px] text-[var(--ink-3)]">{t('Çözüldü', 'Resolved')}: {formatDate(market.resolved_at, lang)}</p>
+          )}
         </div>
       )}
 

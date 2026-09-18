@@ -25,6 +25,9 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
   const [region, setRegion] = useState<MarketRegion | 'all'>('all');
   const [search, setSearch] = useState('');
 
+  const isAwaiting = (m: Market) =>
+    m.status === 'closed' || (m.status === 'active' && new Date(m.ends_at).getTime() <= Date.now());
+
   const filtered = markets.filter((m) => {
     if (category === 'foryou') {
       if (!interests?.includes(m.category)) return false;
@@ -37,6 +40,9 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
     }
     return true;
   });
+
+  const open = filtered.filter((m) => !isAwaiting(m));
+  const awaiting = filtered.filter(isAwaiting);
 
   return (
     <div className="flex flex-col gap-6">
@@ -110,20 +116,34 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
       </div>
 
       {/* Grid */}
-      {filtered.length === 0 ? (
+      {open.length === 0 && awaiting.length === 0 ? (
         <div className="text-center py-20 text-[var(--ink-3)] text-sm">
           {t('Market bulunamadı. Filtreleri sıfırlamayı dene.', 'No markets found. Try clearing the filters.')}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((market) => (
+          {open.map((market) => (
             <MarketCard key={market.id} market={market} />
           ))}
         </div>
       )}
 
+      {awaiting.length > 0 && (
+        <div className="flex flex-col gap-3 mt-2">
+          <div className="flex items-center gap-3">
+            <h2 className="font-display text-base font-bold text-[var(--ink)]">{t('Sonuç bekleniyor', 'Awaiting result')}</h2>
+            <span className="text-xs text-[var(--ink-3)]">{t('Kapandı, sonuç doğrulanınca ödenir', 'Closed, paid out once verified')}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 opacity-80">
+            {awaiting.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="font-data text-xs text-[var(--ink-3)] text-center">
-        {filtered.length} / {markets.length} {t('market', 'markets')}
+        {open.length} {t('açık', 'open')} · {awaiting.length} {t('sonuç bekliyor', 'awaiting')}
       </p>
     </div>
   );

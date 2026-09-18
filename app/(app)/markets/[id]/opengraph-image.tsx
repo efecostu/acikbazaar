@@ -44,7 +44,7 @@ export default async function OpengraphImage({ params }: { params: Promise<{ id:
       }}>
         {/* Üst: marka */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ color: '#2FD588', fontSize: 36, fontWeight: 700 }}>◈</div>
+          <div style={{ display: 'flex', width: 30, height: 30, backgroundColor: '#2FD588', transform: 'rotate(45deg)', borderRadius: 4, marginRight: 6 }} />
           <div style={{ color: '#FFFFFF', fontSize: 30, fontWeight: 700 }}>AçıkBazaar</div>
           <div style={{ color: '#7C9B8A', fontSize: 22, marginLeft: 12, letterSpacing: 2 }}>TAHMİN PAZARI</div>
         </div>

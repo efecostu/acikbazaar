@@ -22,6 +22,7 @@ export default function RegisterPage() {
   // Supabase hata mesajlarını anlaşılır Türkçeye çevir
   const ERROR_MAP: [string, string][] = [
     ['already registered', 'Bu e-posta ile zaten bir hesap var. Giriş yapmayı dene.'],
+    ['profiles_username_format', 'Kullanıcı adı 3-20 karakter; küçük harf, rakam ve alt çizgi.'],
     ['Database error', 'Kayıt sırasında bir sorun oluştu. Birkaç saniye sonra tekrar dene.'],
     ['Password should be', 'Şifre en az 8 karakter olmalı.'],
     ['invalid format', 'E-posta adresi geçersiz görünüyor.'],
@@ -36,14 +37,18 @@ export default function RegisterPage() {
     }
     setLoading(true);
     setError(''); setInfo('');
-    if (username.length < 3) {
-      setError('Kullanıcı adı en az 3 karakter olmalı.');
+    if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      setError('Kullanıcı adı 3-20 karakter olmalı; sadece küçük harf, rakam ve alt çizgi kullan.');
       setLoading(false);
       return;
     }
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email, password, options: { data: { username } },
+      email, password,
+      options: {
+        data: { username },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+      },
     });
     if (signUpError) {
       const friendly = ERROR_MAP.find(([k]) => signUpError.message.includes(k));
@@ -63,14 +68,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--paper)] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <span className="text-[#16A34A] font-bold text-2xl">◈</span>
-            <span className="text-xl font-bold text-[#111827]">AçıkBazaar</span>
+            <span className="text-[var(--rise)] font-bold text-2xl">◈</span>
+            <span className="font-display text-xl font-bold text-[var(--ink)]">AçıkBazaar</span>
           </Link>
-          <p className="text-sm text-[#6B7280] mt-2">Predict openly. Play freely.</p>
+          <p className="text-sm text-[var(--ink-2)] mt-2">Açıkça tahmin et. Özgürce oyna.</p>
         </div>
 
         {IS_DEMO && (
@@ -87,25 +92,25 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#111827] mb-1">Kayıt Ol</h2>
-          <p className="text-sm text-[#6B7280] mb-5">Başlangıç kredisi: <span className="font-semibold text-[#16A34A]">◈100.000</span></p>
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+          <h2 className="font-display text-lg font-bold text-[var(--ink)] mb-1">Kayıt Ol</h2>
+          <p className="text-sm text-[var(--ink-2)] mb-5">Başlangıç kredisi: <span className="font-data font-semibold text-[var(--rise)]">◈100.000</span></p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input id="username" type="text" label="Kullanıcı Adı" placeholder="tahmincu42"
-              value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))} required />
+              value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20))} required />
             <Input id="email" type="email" label="E-posta" placeholder="kullanici@email.com"
               value={email} onChange={(e) => setEmail(e.target.value)} required />
             <Input id="password" type="password" label="Şifre" placeholder="En az 8 karakter"
               value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required />
 
             {error && (
-              <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="text-sm text-[var(--fall)] bg-[var(--fall-soft)] border border-[var(--fall-line)] rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
             {info && (
-              <p className="text-sm text-[#15803D] bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg px-3 py-2">
+              <p className="text-sm text-[var(--rise)] bg-[var(--rise-soft)] border border-[var(--rise-line)] rounded-lg px-3 py-2">
                 ✉️ {info}
               </p>
             )}
@@ -115,9 +120,12 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-[#6B7280] mt-4">
+          <p className="text-center text-sm text-[var(--ink-2)] mt-4">
             Zaten hesabın var mı?{' '}
-            <Link href="/login" className="text-[#16A34A] font-semibold hover:underline">Giriş Yap</Link>
+            <Link href="/login" className="text-[var(--rise)] font-semibold hover:underline">Giriş Yap</Link>
+          </p>
+          <p className="text-center text-[11px] text-[var(--ink-3)] mt-3 leading-relaxed">
+            Kayıt olarak AçıkBazaar&apos;ın bir simülasyon olduğunu, gerçek para içermediğini kabul etmiş olursun.
           </p>
         </div>
       </div>

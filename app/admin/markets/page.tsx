@@ -71,11 +71,13 @@ export default async function AdminMarketsPage() {
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${
                         m.status === 'active'
                           ? overdue ? 'bg-red-50 text-red-500' : 'bg-[#F0FDF4] text-[#16A34A]'
+                          : m.status === 'closed' ? 'bg-amber-50 text-amber-600'
                           : 'bg-[#F3F4F6] text-[#9CA3AF]'
                       }`}>
                         {m.status === 'active'
                           ? overdue ? 'Süresi Doldu' : 'Aktif'
-                          : `Kapandı — ${m.outcome ? 'EVET' : 'HAYIR'}`}
+                          : m.status === 'closed' ? 'Sonuç Bekleniyor'
+                          : `Çözüldü — ${m.kind === 'multi' ? 'seçenek' : m.outcome ? 'EVET' : 'HAYIR'}`}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right">
