@@ -218,6 +218,8 @@ export async function topUpMarkets(
       batches.push({ category, inserted: res.inserted.length });
     } catch (err) {
       batches.push({ category, inserted: 0, error: String(err) });
+      // Faturalama/anahtar hatasında diğer kategorileri denemek anlamsız
+      if (/credit balance|billing|invalid x-api-key|authentication_error/i.test(String(err))) break;
     }
   }
   return { before, generated, batches };

@@ -12,6 +12,7 @@ type MarketRow = {
 type OptionRow = { id: string; label_tr: string; label_en: string; sort: number };
 
 export type SweepResult = {
+  fatal?: string;
   checked: { due: number; open: number };
   resolved: number;
   closed: number;
@@ -20,6 +21,12 @@ export type SweepResult = {
   results: Record<string, unknown>[];
   topUp?: { before: number; generated: number; batches: { category: string; inserted: number; error?: string }[] };
 };
+
+/** Anthropic faturalama/anahtar hatası — tekrar denemek anlamsız, taramayı erken bitir. */
+export function isBillingError(err: unknown): boolean {
+  const msg = String(err);
+  return /credit balance|billing|invalid x-api-key|authentication_error|ANTHROPIC_API_KEY missing/i.test(msg);
+}
 
 function extractJson(text: string): unknown {
   const match = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
@@ -56,6 +63,7 @@ export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boo
   const results: Record<string, unknown>[] = [];
   const wins: WinInfo[] = [];
   let closed = 0;
+  let billingBlocked = false;
 
   const loadOptions = async (m: MarketRow): Promise<OptionRow[] | null> => {
     if (m.kind !== 'multi') return null;
@@ -141,11 +149,12 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
       });
     } catch (err) {
       results.push({ market: market.title_en, path: 'due', status: 'error', reason: String(err) });
+      if (isBillingError(err)) { billingBlocked = true; break; }
     }
   }
 
   // ---------- (b) Erken kesinleşme taraması ----------
-  if (open.length > 0) {
+  if (open.length > 0 && !billingBlocked) {
     try {
       const openWithOptions = await Promise.all(open.map(async (m) => ({ m, options: await loadOptions(m) })));
 
@@ -205,6 +214,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
       }
     } catch (err) {
       results.push({ path: 'early', status: 'error', reason: String(err) });
+      if (isBillingError(err)) billingBlocked = true;
     }
   }
 
@@ -212,7 +222,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
 
   // ---------- (c) Açık market sayısını hedefe tamamla ----------
   let topUp: SweepResult['topUp'];
-  if (opts.topUp !== false) {
+  if (opts.topUp !== false && !billingBlocked) {
     try {
       topUp = await topUpMarkets(admin);
     } catch (err) {
@@ -221,6 +231,7 @@ Use web search to verify. Respond with ONLY a JSON array (no other text) contain
   }
 
   return {
+    ...(billingBlocked ? { fatal: 'Anthropic API kullanılamıyor (kredi bitti / anahtar geçersiz). Plans & Billing kontrol et.' } : {}),
     checked: { due: due.length, open: open.length },
     resolved: results.filter((r) => r.status === 'resolved').length,
     closed,

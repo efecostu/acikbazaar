@@ -39,7 +39,8 @@ export function OpsPanel({ overdue, awaiting, openCount, target, lastResolvedAt,
     setLog(`${name} çalışıyor... (web search'lü, 1-3 dk sürebilir)`);
     startTransition(async () => {
       const res = await action();
-      setLog(JSON.stringify(res, null, 2));
+      const fatal = (res as { fatal?: string }).fatal;
+      setLog((fatal ? `❌ ${fatal}\n\n` : '') + JSON.stringify(res, null, 2));
       router.refresh();
     });
   }
