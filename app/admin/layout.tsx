@@ -1,10 +1,8 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { isAdminUser } from '@/lib/adminAuth';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'efecostu01@gmail.com';
 
 const NAV = [
   { href: '/admin',              label: 'Dashboard',    icon: '📊' },
@@ -15,10 +13,7 @@ const NAV = [
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user || user.email !== ADMIN_EMAIL) redirect('/markets');
+  if (!(await isAdminUser())) redirect('/markets');
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex">

@@ -18,11 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .select('title_tr, description_tr, yes_prob')
     .eq('id', id)
     .single();
-  if (!market) return { title: 'AçıkBazaar' };
+  if (!market) return { title: 'Market bulunamadı' };
   const pct = Math.round((market.yes_prob ?? 0.5) * 100);
+  const description = market.description_tr ?? `Topluluk %${pct} EVET diyor. Sen ne dersin? Ücretsiz tahmin et.`;
+  // Başlık şablonu (layout) " — AçıkBazaar" ekler
   return {
-    title: `${market.title_tr} — AçıkBazaar`,
-    description: market.description_tr ?? `Topluluk %${pct} EVET diyor. Sen ne dersin? Ücretsiz tahmin et.`,
+    title: market.title_tr,
+    description,
+    alternates: { canonical: `/markets/${id}` },
+    openGraph: { title: market.title_tr, description, type: 'article' },
+    twitter: { card: 'summary_large_image', title: market.title_tr, description },
   };
 }
 

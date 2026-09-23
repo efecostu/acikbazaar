@@ -1,5 +1,5 @@
+import { hasAdminSecret, unauthorized } from '@/lib/adminAuth';
 import { createAdminClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
 import { settleMarket } from '@/lib/settle';
 import { sendWinEmails } from '@/lib/notify';
 
@@ -7,10 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /** Manuel çözüm API'si — admin secret ile. Body: { marketId, outcome } veya { marketId, winningOptionId } */
 export async function POST(req: Request) {
-  const headerStore = await headers();
-  if (!process.env.ADMIN_SECRET || headerStore.get('x-admin-secret') !== process.env.ADMIN_SECRET) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!(await hasAdminSecret())) return unauthorized();
 
   const body = await req.json().catch(() => ({}));
   const { marketId, outcome, winningOptionId, reasoning } = body as {

@@ -82,11 +82,4 @@ export interface LeaderboardEntry {
   win_rate: number;
 }
 
-export interface AIFavorite {
-  name: string;
-  prob: number;
-  color: string;
-  bgColor: string;
-}
-
 export type Lang = 'tr' | 'en';

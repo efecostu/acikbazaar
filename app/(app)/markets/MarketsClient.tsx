@@ -18,9 +18,11 @@ interface Props {
   markets: Market[];
   interests?: string[] | null;
   trades?: TradeRow[];
+  /** Son çözülen marketler — "sonuçlar ödeniyor mu?" sorusunun cevabı */
+  resolved?: Market[];
 }
 
-export function MarketsClient({ markets, interests = null, trades = [] }: Props) {
+export function MarketsClient({ markets, interests = null, trades = [], resolved = [] }: Props) {
   const { lang, t } = useLang();
   const hasInterests = !!interests && interests.length > 0 && interests.length < 7;
   const [category, setCategory] = useState<MarketCategory | 'all' | 'foryou'>(hasInterests ? 'foryou' : 'all');
@@ -163,6 +165,20 @@ export function MarketsClient({ markets, interests = null, trades = [] }: Props)
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 opacity-80">
             {awaiting.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {resolved.length > 0 && (
+        <div className="flex flex-col gap-3 mt-2">
+          <div className="flex items-center gap-3">
+            <h2 className="font-display text-base font-bold text-[var(--ink)]">{t('Son sonuçlananlar', 'Recently resolved')}</h2>
+            <span className="text-xs text-[var(--ink-3)]">{t('Kazananlara ödeme yapıldı', 'Winners have been paid')}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 opacity-75">
+            {resolved.map((market) => (
               <MarketCard key={market.id} market={market} />
             ))}
           </div>

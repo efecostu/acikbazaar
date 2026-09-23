@@ -1,5 +1,5 @@
+import { hasAdminSecret, unauthorized } from '@/lib/adminAuth';
 import { createAdminClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
 import { generateMarkets, topUpMarkets } from '@/lib/generate';
 import type { MarketCategory, MarketRegion } from '@/types';
 
@@ -12,10 +12,7 @@ export const maxDuration = 120;
  *       { topUp: true }                  → açık market sayısını hedefe tamamla
  */
 export async function POST(req: Request) {
-  const headerStore = await headers();
-  if (!process.env.ADMIN_SECRET || headerStore.get('x-admin-secret') !== process.env.ADMIN_SECRET) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!(await hasAdminSecret())) return unauthorized();
 
   const body = await req.json().catch(() => ({}));
   const admin = await createAdminClient();

@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin', '/api/', '/portfolio', '/profile', '/onboarding'],
     },
-    sitemap: 'https://acikbazaar.com/sitemap.xml',
+    sitemap: `${(process.env.NEXT_PUBLIC_APP_URL ?? 'https://acikbazaar.com').replace(/\/+$/, '')}/sitemap.xml`,
   };
 }

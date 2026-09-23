@@ -29,6 +29,8 @@ Supabase SQL Editor'da sırayla çalıştır (hepsi idempotent, tekrar çalışt
 7. `supabase-hotfix-register.sql` — kayıt trigger'ı (her zaman RETURN NEW)
 8. `supabase-migration-7.sql` — çözüm gerekçesi, "sonuç bekleniyor" durumu, indeksler, yorum rate-limit, `platform_stats()`
 9. `supabase-migration-8.sql` — haftalık sıralama görünümü (`leaderboard_weekly`), davet sistemi (`?ref=kullaniciadi`, iki tarafa ◈5.000)
+10. `supabase-migration-9.sql` — kullanıcı adı kısıtı düzeltmesi, canlı (mark-to-market) sıralama
+11. `supabase-migration-10.sql` — **güvenlik**: doğrudan bahis ekleme kapatıldı (`bets_insert_own`), iç RPC'ler (`credit_and_update_user` vb.) sadece servis rolüne açık, atomik `bot_place_bet`, `adjust_balance`, İstanbul saatine göre streak, davet sayacı düzeltmesi
 
 Supabase → Authentication → URL Configuration:
 - **Site URL:** `https://acikbazaar.com` (localhost bırakılırsa doğrulama e-postaları localhost'a gider)
@@ -51,7 +53,7 @@ curl -H "x-admin-secret: $ADMIN_SECRET" -X POST -H 'Content-Type: application/js
 
 ## Botlar (sürekli canlılık)
 
-Dört bot (`is_bot = true`) `/api/bots/tick` ile bahis yapar: her tick 2-4 bahis, 12 dk throttle, 02:00-07:00 TRT arası uyur, her bot+market ikilisi için sabit "kanaat" (aynı bot aynı markette tutarlı), az bahis alan ve yakında kapanacak marketlere öncelik. Tetikleyiciler:
+Botlar (`is_bot = true`, kişilikler `lib/botVoice.ts`) `/api/bots/tick` ile bahis yapar: her tick 4-8 bahis, 5 dk throttle, 02:00-07:00 TRT arası uyur, her bot+market ikilisi için sabit "kanaat" (aynı bot aynı markette tutarlı), az bahis alan ve yakında kapanacak marketlere öncelik. Tetikleyiciler:
 
 - Sayfa ziyaretleri: landing, market listesi ve market detayı yanıt sonrası tick'i dürter (`lib/botTrigger.ts`).
 - Harici zamanlayıcı (önerilir, Hobby planda 3. cron yok): [cron-job.org](https://cron-job.org) gibi ücretsiz bir servisten her 15 dakikada `GET https://acikbazaar.com/api/bots/tick` çağır, header: `x-admin-secret: <ADMIN_SECRET>`.
@@ -61,12 +63,16 @@ Dört bot (`is_bot = true`) `/api/bots/tick` ile bahis yapar: her tick 2-4 bahis
 curl -H "x-admin-secret: $ADMIN_SECRET" "https://acikbazaar.com/api/bots/tick?force=1&burst=25"
 ```
 
-### Bot yorumları
+### Bot kişilikleri ve yorumları
 
-Her bahse bir yorum. Model seçimi `lib/llm.ts`: `LLM_BASE_URL` + `LLM_API_KEY` (+ `LLM_MODEL`) tanımlıysa OpenAI uyumlu ucuz bir model (Qwen Flash, OpenRouter, Groq, DeepSeek), yoksa `ANTHROPIC_API_KEY`, o da yoksa şablon havuzu. Market üretimi ve otomatik çözüm web araması gerektirdiği için Anthropic'te kalır.
+`lib/botVoice.ts` → `PERSONAS`: her botun biyografisi, konuşma ağzı (`voice`), olaylara yaklaşımı (`stance`), few-shot örnek yorumları, bahis aralığı, kalabalığa ters oynama eğilimi (`contrarian`), konuşkanlığı (`chattiness`), ilgi alanı kategorileri (`likes`) ve orana değinme olasılığı (`oddsTalk`).
 
+- Yorumlar **olayın kendisi** hakkındadır (takım, kişi, kurum, koşullar, geçmiş tecrübe), oran hakkında değil. Oran prompt'a sadece `oddsTalk` olasılığıyla girer.
+- Botlar ilgi alanlarındaki marketlerde daha sık görünür (futbolda TaraftarTarik, kriptoda KriptoKaan...).
+- Aynı başlıktaki son yorumlar kullanıcı adlarıyla prompt'a girer; botlar birbirine `@ad` ile laf atabilir.
+- LLM yoksa botun sesine uygun, orandan bağımsız şablon havuzu kullanılır.
 
-`lib/botVoice.ts`: her botun sesi (Ekşi/Twitter/İnci ağzı) + few-shot örnek yorumları. Prompt'a humanizer ilkeleri gömülü (sahneleme yok, kapanış cümlesi yok, üçlü liste yok, tire yok, emoji/hashtag yok, uydurma rakam yok). Normal tick'te %35 ihtimalle yorum; aynı markete 2 saat içinde ikinci bot yorumu yazılmaz. Anthropic anahtarı yoksa bot başına şablon havuzundan seçer. `sanitizeComment` modelin kaçırdığı emoji/tire/uzunluğu düzeltir.
+**Yeni bot eklemek:** `PERSONAS`'a bir giriş ekle, deploy et, `/admin` → **Botları eşitle**. Eksik bot hesapları (`<ad>@bots.acikbazaar.com`) otomatik açılır ve `is_bot` işaretlenir.
 
 ## Market seti (AI olmadan)
 
@@ -124,3 +130,12 @@ proxy.ts           Supabase oturum yenileme (Next 16'da middleware'in adı)
 ```bash
 npx tsc --noEmit && npm run build
 ```
+
+## Geliştirme
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm test            # node --test (lib/json, lib/odds, lib/botVoice)
+```
+
+Admin server action'ları (`app/admin/_actions.ts`) herkese açık POST uç noktalarıdır; her biri `requireAdmin()` ile başlamalıdır (`lib/adminAuth.ts`). Secret karşılaştırmaları sabit zamanlıdır.

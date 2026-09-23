@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { MarketCategory, MarketRegion } from '@/types';
 import { cheapResearchAvailable, gatherEvidence, answerWithEvidence } from '@/lib/research';
+import { extractJson, isBillingError } from '@/lib/json';
 
 export const CATEGORIES: MarketCategory[] = ['politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 
@@ -42,8 +43,7 @@ export type GenerateResult = {
 };
 
 function extractArray(text: string): unknown[] {
-  const match = text.match(/\[[\s\S]*\]/);
-  const parsed = JSON.parse(match?.[0] ?? text);
+  const parsed = extractJson(text);
   return Array.isArray(parsed) ? parsed : [];
 }
 
@@ -237,7 +237,7 @@ export async function topUpMarkets(
     } catch (err) {
       batches.push({ category, inserted: 0, error: String(err) });
       // Faturalama/anahtar hatasında diğer kategorileri denemek anlamsız
-      if (/credit balance|billing|invalid x-api-key|authentication_error/i.test(String(err))) break;
+      if (isBillingError(err)) break;
     }
   }
   return { before, generated, batches };

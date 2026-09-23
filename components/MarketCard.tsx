@@ -21,6 +21,7 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const { yesProb, yesOdds, noOdds } = calculateOdds(market.yes_pool, market.no_pool);
   const yesPct = Math.round(yesProb * 100);
   const days = daysUntil(market.ends_at);
+  const resolved = market.status === 'resolved';
   const awaiting = market.status === 'closed' || (market.status === 'active' && new Date(market.ends_at).getTime() <= Date.now());
   const title = lang === 'tr' ? market.title_tr : market.title_en;
   const catColor = categoryColor(market.category);
@@ -33,6 +34,11 @@ export function MarketCard({ market, href }: MarketCardProps) {
   const topOptions = [...options].sort((a, b) => b.pool - a.pool).slice(0, 2);
   const optPct = (pool: number) => Math.round((pool / Math.max(optTotal, 1)) * 100);
   const leader = topOptions[0];
+  const winner = resolved
+    ? (isMulti
+        ? options.find((o) => o.id === market.winning_option_id)?.[lang === 'tr' ? 'label_tr' : 'label_en'] ?? '—'
+        : market.outcome ? t('EVET', 'YES') : t('HAYIR', 'NO'))
+    : null;
 
   return (
     <Link href={link} className="block h-full">
@@ -51,7 +57,15 @@ export function MarketCard({ market, href }: MarketCardProps) {
               </span>
             )}
           </div>
-          {awaiting ? (
+          {resolved ? (
+            <span className={`font-data text-[10px] uppercase tracking-wider shrink-0 px-2 py-0.5 rounded-md border truncate max-w-[140px] ${
+              !isMulti && !market.outcome
+                ? 'bg-[var(--fall-soft)] text-[var(--fall)] border-[var(--fall-line)]'
+                : 'bg-[var(--rise-soft)] text-[var(--rise)] border-[var(--rise-line)]'
+            }`}>
+              {t('sonuç', 'result')}: {winner}
+            </span>
+          ) : awaiting ? (
             <span className="font-data text-[10px] uppercase tracking-wider shrink-0 px-2 py-0.5 rounded-md bg-[var(--copper-soft)] text-[var(--copper)] border border-[var(--copper-line)]">
               {t('sonuç bekleniyor', 'awaiting result')}
             </span>

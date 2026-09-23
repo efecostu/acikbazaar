@@ -164,7 +164,7 @@ export default async function MarketsPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const [{ data: markets }, { data: profile }, { data: trades }] = await Promise.all([
+  const [{ data: markets }, { data: profile }, { data: trades }, { data: resolved }] = await Promise.all([
     supabase
       .from('markets')
       .select('*, market_options(*)')
@@ -178,6 +178,12 @@ export default async function MarketsPage() {
       .select('id, side, amount, created_at, profiles(username, is_bot), markets(id, title_tr, title_en)')
       .order('created_at', { ascending: false })
       .limit(12),
+    supabase
+      .from('markets')
+      .select('*, market_options(*)')
+      .eq('status', 'resolved')
+      .order('resolved_at', { ascending: false, nullsFirst: false })
+      .limit(9),
   ]);
 
   return (
@@ -185,6 +191,7 @@ export default async function MarketsPage() {
       markets={markets ?? []}
       interests={profile?.interests ?? null}
       trades={(trades as never[]) ?? []}
+      resolved={resolved ?? []}
     />
   );
 }

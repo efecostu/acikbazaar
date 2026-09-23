@@ -1,6 +1,7 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { revalidatePath } from 'next/cache';
 import { sendWinEmails } from '@/lib/notify';
 import { settleMarket } from '@/lib/settle';
@@ -17,6 +18,7 @@ export async function updateMarket(marketId: string, data: {
   ends_at?: string;
   tag?: string | null;
 }) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   await supabase.from('markets').update(data).eq('id', marketId);
   revalidatePath('/admin/markets');
@@ -24,6 +26,7 @@ export async function updateMarket(marketId: string, data: {
 }
 
 export async function resolveMarket(marketId: string, outcome: boolean, reasoning?: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   try {
     const result = await settleMarket(supabase, marketId, { outcome, winningOptionId: null, reasoning: reasoning ?? null });
@@ -39,6 +42,7 @@ export async function resolveMarket(marketId: string, outcome: boolean, reasonin
 }
 
 export async function resolveMarketMulti(marketId: string, winningOptionId: string, reasoning?: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   try {
     const result = await settleMarket(supabase, marketId, { outcome: null, winningOptionId, reasoning: reasoning ?? null });
@@ -56,6 +60,7 @@ export async function resolveMarketMulti(marketId: string, winningOptionId: stri
 /** Süresi dolmuş ama çözülememiş marketi "sonuç bekleniyor" (closed) durumuna al / geri aç. */
 /** Yanlış çözülmüş marketi geri aç: ödemeler iade edilir, bahisler pending'e döner. */
 export async function unsettleMarketAction(marketId: string) {
+  await requireAdmin();
   const { unsettleMarket } = await import('@/lib/settle');
   const supabase = await createAdminClient();
   const r = await unsettleMarket(supabase, marketId);
@@ -67,6 +72,7 @@ export async function unsettleMarketAction(marketId: string) {
 }
 
 export async function setMarketStatus(marketId: string, status: 'active' | 'closed') {
+  await requireAdmin();
   const supabase = await createAdminClient();
   await supabase.from('markets').update({ status }).eq('id', marketId);
   revalidatePath('/admin/markets');
@@ -76,6 +82,7 @@ export async function setMarketStatus(marketId: string, status: 'active' | 'clos
 
 /** Günlük cron'un yaptığı taramayı admin panelinden anında çalıştır. */
 export async function runResolveNow() {
+  await requireAdmin();
   const supabase = await createAdminClient();
   try {
     const result = await runResolveSweep(supabase);
@@ -90,6 +97,7 @@ export async function runResolveNow() {
 
 /** Açık market sayısını hedefe tamamla (AI üretimi). */
 export async function topUpNow() {
+  await requireAdmin();
   const supabase = await createAdminClient();
   try {
     const result = await topUpMarkets(supabase);
@@ -111,6 +119,7 @@ export async function createMultiMarket(data: {
   options: { label_tr: string; label_en: string; weight: number }[];
   simulated_volume: number;
 }) {
+  await requireAdmin();
   const supabase = await createAdminClient();
 
   const { data: market, error } = await supabase.from('markets').insert({
@@ -147,8 +156,11 @@ export async function createMultiMarket(data: {
 }
 
 export async function deleteMarket(marketId: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
-  await supabase.from('bets').delete().eq('market_id', marketId);
+  // Açık bahislerin parası kullanıcılara iade edilir; sonra market (ve cascade ile geri kalan bahisler) silinir
+  const { refundPendingBets } = await import('@/lib/settle');
+  await refundPendingBets(supabase, marketId);
   await supabase.from('markets').delete().eq('id', marketId);
   revalidatePath('/admin/markets');
 }
@@ -165,6 +177,7 @@ export async function createMarket(data: {
   tag: string | null;
   simulated_volume: number;
 }) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   const { yes_prob, simulated_volume } = data;
   const yes_pool = Math.floor(simulated_volume * yes_prob);
@@ -193,6 +206,7 @@ export async function createMarket(data: {
 }
 
 export async function approveSuggestion(suggestionId: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   const { data: s } = await supabase
     .from('market_suggestions')
@@ -213,7 +227,8 @@ Question: ${s.title_tr}
 ${s.details ? `Details: ${s.details}` : ''}
 Resolution date: ${s.ends_at}
 Today: ${new Date().toISOString().slice(0, 10)}`, { maxTokens: 300, temperature: 0.3 });
-    const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
+    const { extractJson } = await import('@/lib/json');
+    const parsed = extractJson(text) as { title_en?: string; yes_prob?: number };
     if (parsed.title_en) title_en = parsed.title_en;
     const p = Number(parsed.yes_prob);
     if (p >= 0.05 && p <= 0.95) yes_prob = p;
@@ -248,12 +263,14 @@ Today: ${new Date().toISOString().slice(0, 10)}`, { maxTokens: 300, temperature:
 }
 
 export async function rejectSuggestion(suggestionId: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   await supabase.from('market_suggestions').update({ status: 'rejected' }).eq('id', suggestionId);
   revalidatePath('/admin/suggestions');
 }
 
 export async function generateMarketWithAI(category: string, region: string) {
+  await requireAdmin();
   const supabase = await createAdminClient();
   try {
     const result = await generateMarkets(supabase, {
@@ -268,4 +285,51 @@ export async function generateMarketWithAI(category: string, region: string) {
   } catch (err) {
     return { error: String(err) };
   }
+}
+
+/**
+ * lib/botVoice.ts'teki her persona için bot hesabı açar (yoksa) ve is_bot işaretler.
+ * Yeni bot eklemek = PERSONAS'a persona eklemek + bu butona basmak.
+ */
+export async function syncBots() {
+  await requireAdmin();
+  const supabase = await createAdminClient();
+  const { PERSONAS } = await import('@/lib/botVoice');
+  const { randomBytes } = await import('node:crypto');
+
+  const { data: existing } = await supabase.from('profiles').select('id, username, is_bot');
+  const byName = new Map((existing ?? []).map((p) => [p.username.toLowerCase(), p]));
+
+  const created: string[] = [];
+  const flagged: string[] = [];
+  const errors: string[] = [];
+
+  for (const username of Object.keys(PERSONAS)) {
+    const found = byName.get(username.toLowerCase());
+    if (found) {
+      if (!found.is_bot || found.username !== username) {
+        await supabase.from('profiles').update({ is_bot: true, username }).eq('id', found.id);
+        flagged.push(username);
+      }
+      continue;
+    }
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: `${username.toLowerCase()}@bots.acikbazaar.com`,
+      password: randomBytes(24).toString('base64url'),
+      email_confirm: true,
+      user_metadata: { username },
+    });
+    if (error || !data.user) { errors.push(`${username}: ${error?.message ?? 'createUser failed'}`); continue; }
+    // Trigger kullanıcı adını küçük harfe çevirir; bot adını olduğu gibi yaz. Trigger çalışmadıysa profili aç.
+    const { error: upErr } = await supabase.from('profiles').upsert(
+      { id: data.user.id, username, is_bot: true, balance: 100000 },
+      { onConflict: 'id' },
+    );
+    if (upErr) errors.push(`${username}: ${upErr.message}`);
+    else created.push(username);
+  }
+
+  revalidatePath('/admin');
+  revalidatePath('/leaderboard');
+  return { success: errors.length === 0, created, flagged, errors, total: Object.keys(PERSONAS).length };
 }

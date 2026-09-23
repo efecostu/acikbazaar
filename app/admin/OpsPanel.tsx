@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { runResolveNow, topUpNow } from '@/app/admin/_actions';
+import { runResolveNow, topUpNow, syncBots } from '@/app/admin/_actions';
 
 interface Props {
   overdue: number;
@@ -38,7 +38,8 @@ export function OpsPanel({ overdue, awaiting, openCount, target, lastResolvedAt,
   function run(action: () => Promise<Record<string, unknown>>, name: string) {
     setLog(`${name} çalışıyor... (web search'lü, 1-3 dk sürebilir)`);
     startTransition(async () => {
-      const res = await action();
+      let res: Record<string, unknown>;
+      try { res = await action(); } catch (e) { res = { error: String(e) }; }
       const fatal = (res as { fatal?: string }).fatal;
       setLog((fatal ? `❌ ${fatal}\n\n` : '') + JSON.stringify(res, null, 2));
       router.refresh();
@@ -64,6 +65,13 @@ export function OpsPanel({ overdue, awaiting, openCount, target, lastResolvedAt,
             disabled={pending}
             className="bg-[#F3F4F6] text-[#374151] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#E5E7EB] disabled:opacity-50 transition-colors">
             ✨ Market üret
+          </button>
+          <button
+            onClick={() => run(syncBots as () => Promise<Record<string, unknown>>, 'Bot eşitleme')}
+            disabled={pending}
+            title="lib/botVoice.ts'teki her persona için bot hesabı açar"
+            className="bg-[#F3F4F6] text-[#374151] text-xs font-semibold px-3 py-2 rounded-lg hover:bg-[#E5E7EB] disabled:opacity-50 transition-colors">
+            🤖 Botları eşitle
           </button>
         </div>
       </div>

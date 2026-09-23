@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
+import { hasAdminSecret, isCronRequest, unauthorized } from '@/lib/adminAuth';
 import { runResolveSweep } from '@/lib/resolve';
 import { sendDailyReport } from '@/lib/report';
 
@@ -12,16 +12,11 @@ export const maxDuration = 300; // web search'lü çözümler uzun sürebilir
  *  - Manuel: x-admin-secret: <ADMIN_SECRET>
  */
 export async function GET(req: Request) {
-  const headerStore = await headers();
-  const cronToken = headerStore.get('authorization')?.replace('Bearer ', '');
-  const adminHeader = headerStore.get('x-admin-secret');
-
-  const isVercelCron = !!process.env.CRON_SECRET && cronToken === process.env.CRON_SECRET;
-  const isAdmin = !!process.env.ADMIN_SECRET && adminHeader === process.env.ADMIN_SECRET;
+  const isVercelCron = await isCronRequest();
+  const isAdmin = await hasAdminSecret();
 
   if (!isVercelCron && !isAdmin) {
-    const hint = !process.env.CRON_SECRET ? 'CRON_SECRET env is not set on this deployment' : undefined;
-    return Response.json({ error: 'Unauthorized', hint }, { status: 401 });
+    return unauthorized(!process.env.CRON_SECRET ? 'CRON_SECRET env is not set on this deployment' : undefined);
   }
 
   try {

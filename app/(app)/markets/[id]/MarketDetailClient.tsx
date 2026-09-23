@@ -6,10 +6,9 @@ import { Market, MarketOption, Bet, BetSide } from '@/types';
 import { useLang } from '@/contexts/LangContext';
 import { createClient } from '@/lib/supabase/client';
 import { calculateOdds, calculatePayout } from '@/lib/odds';
-import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate, getAIFavorites, tagLabel } from '@/lib/utils';
+import { categoryColor, categoryLabel, daysUntil, formatCredits, formatDate, tagLabel } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { AIFavorites } from '@/components/AIFavorites';
 import { ProbChart, ProbPoint } from '@/components/ProbChart';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { celebrate } from '@/lib/confetti';
@@ -126,10 +125,10 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
     setBalance(data?.new_balance ?? balance - amount);
     const picked = isMulti
       ? (lang === 'tr' ? activeOption?.label_tr : activeOption?.label_en)
-      : selectedSide?.toUpperCase();
+      : selectedSide === 'yes' ? t('EVET', 'YES') : t('HAYIR', 'NO');
     let msg = t(`◈${formatCredits(amount)} — "${picked}" için bahis yapıldı!`, `Bet placed: ◈${formatCredits(amount)} on "${picked}"!`);
     if (data?.streak_bonus > 0) {
-      msg += t(` 🔥 ${data.streak}. gün streak — ◈${formatCredits(data.streak_bonus)} bonus!`, ` 🔥 Day ${data.streak} streak — ◈${formatCredits(data.streak_bonus)} bonus!`);
+      msg += t(` ${data.streak}. gün seri — ◈${formatCredits(data.streak_bonus)} bonus!`, ` Day ${data.streak} streak — ◈${formatCredits(data.streak_bonus)} bonus!`);
     }
     setSuccess(msg);
     celebrate(betBtnRef.current);
@@ -252,8 +251,6 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
         <ProbChart points={history} currentProb={yesProb} />
       )}
 
-      {/* AI Favorites — sadece binary */}
-      {!isMulti && <AIFavorites favorites={getAIFavorites(market.id, yesProb)} />}
 
       {children}
       </div>
@@ -411,7 +408,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
           <h3 className="text-sm font-bold text-[var(--ink)]">{t('Bahislerim', 'My Bets')}</h3>
           {userBets.map((bet) => {
             const pick = bet.side
-              ? bet.side.toUpperCase()
+              ? (bet.side === 'yes' ? t('EVET', 'YES') : t('HAYIR', 'NO'))
               : (lang === 'tr' ? bet.market_options?.label_tr : bet.market_options?.label_en) ?? '—';
             return (
               <div key={bet.id} className="flex items-center justify-between gap-2 text-sm border-b border-[var(--border-light)] pb-2 last:border-0 last:pb-0">
