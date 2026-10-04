@@ -1,0 +1,13 @@
+services:
+  agents:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: acikbazaar-agents
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 512m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

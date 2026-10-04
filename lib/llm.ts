@@ -15,6 +15,18 @@ import Anthropic from '@anthropic-ai/sdk';
  */
 export interface ChatOpts { maxTokens?: number; temperature?: number; system?: string; model?: string }
 
+/**
+ * Süreç içi kullanım sayacı. VPS worker her ajan çalışmasından önce sıfırlar, sonra agent_runs'a yazar
+ * (günlük bütçe buradan hesaplanır). costUsd OpenRouter'ın döndürdüğü gerçek maliyettir.
+ */
+export const usageMeter = { calls: 0, promptTokens: 0, completionTokens: 0, costUsd: 0, searches: 0 };
+export function resetUsage() {
+  Object.assign(usageMeter, { calls: 0, promptTokens: 0, completionTokens: 0, costUsd: 0, searches: 0 });
+}
+export function usageSnapshot() {
+  return { ...usageMeter, costUsd: Math.round(usageMeter.costUsd * 1e6) / 1e6 };
+}
+
 export function llmProvider(): 'openai-compatible' | 'anthropic' | null {
   if (process.env.LLM_BASE_URL && process.env.LLM_API_KEY) return 'openai-compatible';
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
@@ -39,11 +51,20 @@ export async function chat(prompt: string, opts: ChatOpts = {}): Promise<string>
           ...(opts.system ? [{ role: 'system', content: opts.system }] : []),
           { role: 'user', content: prompt },
         ],
+        // OpenRouter: yanıtta gerçek maliyeti döndür
+        ...(base.includes('openrouter') ? { usage: { include: true } } : {}),
       }),
       signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) throw new Error(`LLM ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    const data = await res.json() as { choices?: { message?: { content?: string } }[] };
+    const data = await res.json() as {
+      choices?: { message?: { content?: string } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number };
+    };
+    usageMeter.calls++;
+    usageMeter.promptTokens += data.usage?.prompt_tokens ?? 0;
+    usageMeter.completionTokens += data.usage?.completion_tokens ?? 0;
+    usageMeter.costUsd += data.usage?.cost ?? 0;
     return (data.choices?.[0]?.message?.content ?? '').trim();
   }
 

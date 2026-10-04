@@ -334,3 +334,30 @@ export async function syncBots() {
   revalidatePath('/leaderboard');
   return { success: errors.length === 0, created, flagged, errors, total: Object.keys(PERSONAS).length };
 }
+
+const AGENT_NAMES = ['resolver', 'scout', 'tracker', 'trader', 'ops'];
+
+/** VPS ajanlarının ana şalteri (worker her dakika okur). */
+export async function setAgentsEnabled(enabled: boolean) {
+  await requireAdmin();
+  const supabase = await createAdminClient();
+  const { error } = await supabase.from('agent_settings')
+    .upsert({ key: 'enabled', value: enabled, updated_at: new Date().toISOString() });
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/agents');
+  return { success: true };
+}
+
+export async function setAgentPaused(agent: string, paused: boolean) {
+  await requireAdmin();
+  if (!AGENT_NAMES.includes(agent)) return { success: false, error: 'unknown agent' };
+  const supabase = await createAdminClient();
+  const { data } = await supabase.from('agent_settings').select('value').eq('key', 'paused').maybeSingle();
+  const current = Array.isArray(data?.value) ? (data.value as string[]) : [];
+  const next = paused ? [...new Set([...current, agent])] : current.filter((a) => a !== agent);
+  const { error } = await supabase.from('agent_settings')
+    .upsert({ key: 'paused', value: next, updated_at: new Date().toISOString() });
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/agents');
+  return { success: true };
+}

@@ -77,6 +77,12 @@ export async function GET(req: Request) {
   }
 
   if (!force) {
+    // VPS'teki trader ajanı çalışıyorsa bu tick devre dışı; worker düşerse 30 dk sonra yedek olarak devreye girer
+    const { data: agentRun } = await supabase
+      .from('agent_runs').select('started_at').eq('agent', 'trader').eq('ok', true)
+      .gte('started_at', new Date(Date.now() - 30 * 60_000).toISOString()).limit(1).maybeSingle();
+    if (agentRun) return Response.json({ skipped: true, reason: 'agent_active' });
+
     const { data: lastBet } = await supabase
       .from('bets')
       .select('created_at, profiles!inner(is_bot)')

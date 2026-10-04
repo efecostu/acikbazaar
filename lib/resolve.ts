@@ -33,7 +33,7 @@ export { isBillingError };
  *  (b) hâlâ açık marketler → şimdiden kesinleşen var mı? (erken çözüm)
  *  (c) açık market sayısını hedefe tamamla (top-up)
  */
-export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean; forceEarly?: boolean } = {}): Promise<SweepResult> {
+export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean; forceEarly?: boolean; skipEarly?: boolean } = {}): Promise<SweepResult> {
   const cheap = cheapResearchAvailable();
   if (!cheap && !process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing (or set SERPER_API_KEY + LLM_*)');
   const client = cheap ? null : new Anthropic();
@@ -166,6 +166,11 @@ If you cannot determine with confidence >= 0.7, set outcome to null.`;
       // Maliyet: erken tarama her gün değil, Pazartesi ve Perşembe (EARLY_SCAN_DAYS ile değiştirilebilir, ör. "1,2,3,4,5")
       const scanDays = (process.env.EARLY_SCAN_DAYS ?? '1').split(',').map((d) => parseInt(d.trim()));
       const dow = new Date().getUTCDay();
+      // VPS ajanı birkaç saatte bir çağırır; erken tarama sadece günlük Vercel cron'unda koşar
+      if (opts.skipEarly) {
+        results.push({ path: 'early', status: 'skipped', reason: 'skipEarly (ajan çalışması)' });
+        throw new Error('__skip_early__');
+      }
       if (!scanDays.includes(dow) && !opts.forceEarly) {
         results.push({ path: 'early', status: 'skipped', reason: `erken tarama günü değil (gün ${dow}; EARLY_SCAN_DAYS=${scanDays.join(',')})` });
         throw new Error('__skip_early__');

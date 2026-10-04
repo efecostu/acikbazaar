@@ -1,4 +1,4 @@
-import { chat, llmProvider } from '@/lib/llm';
+import { chat, llmProvider, usageMeter } from '@/lib/llm';
 
 /**
  * Ucuz araştırma yolu: Serper (Google arama, 2.500 ücretsiz kredi, sonra 1.000 arama ≈ 0,30 $)
@@ -26,6 +26,7 @@ export async function serperSearch(q: string, opts: { num?: number; recent?: 'd'
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(15_000),
   });
+  usageMeter.searches++;
   if (!res.ok) throw new Error(`serper ${res.status}`);
   const data = await res.json() as { organic?: { title: string; link: string; snippet: string; date?: string }[]; answerBox?: { answer?: string; snippet?: string; title?: string } };
   const hits: SearchHit[] = (data.organic ?? []).map((o) => ({ title: o.title, link: o.link, snippet: o.snippet, date: o.date }));

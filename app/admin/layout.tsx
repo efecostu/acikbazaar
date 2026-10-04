@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin/markets/new',  label: 'Yeni Market',  icon: '➕' },
   { href: '/admin/suggestions',  label: 'Öneriler',     icon: '💡' },
   { href: '/admin/bets',         label: 'Bahisler',     icon: '🎯' },
+  { href: '/admin/agents',       label: 'Ajanlar',      icon: '🤖' },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

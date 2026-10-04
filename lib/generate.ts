@@ -7,7 +7,7 @@ import { extractJson, isBillingError } from '@/lib/json';
 export const CATEGORIES: MarketCategory[] = ['politics', 'economy', 'sports', 'tech', 'world', 'entertainment', 'weather'];
 
 /** Sitede her zaman en az bu kadar açık market olsun (cron top-up hedefi). */
-export const TARGET_ACTIVE_MARKETS = 16;
+export const TARGET_ACTIVE_MARKETS = parseInt(process.env.TARGET_ACTIVE_MARKETS ?? '45');
 
 /** Ucuz yol için kategori başına Google sorguları (Türkiye gündemi). */
 const SEARCH_QUERIES: Record<string, string[]> = {
