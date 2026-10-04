@@ -38,11 +38,17 @@ function brief(r: Run): string {
 export default async function AdminAgentsPage() {
   await requireAdminPage();
   const supabase = await createAdminClient();
-  const [{ data: settings, error }, { data: runs }, { data: estimates }] = await Promise.all([
+  const now = new Date();
+  const trtMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), -3));
+  if (trtMidnight > now) trtMidnight.setUTCDate(trtMidnight.getUTCDate() - 1);
+  const [{ data: settings, error }, { data: runs }, { data: estimates }, { data: todayRuns }] = await Promise.all([
     supabase.from('agent_settings').select('key, value'),
     supabase.from('agent_runs').select('id, agent, started_at, finished_at, ok, summary, error').order('started_at', { ascending: false }).limit(60),
     supabase.from('market_estimates').select('yes_prob, confidence, summary_tr, created_at, markets(title_tr, yes_prob)').order('created_at', { ascending: false }).limit(8),
+    supabase.from('agent_runs').select('usage:summary->usage').gte('started_at', trtMidnight.toISOString()),
   ]);
+  const spent = ((todayRuns ?? []) as { usage: { costUsd?: number; searches?: number } | null }[])
+    .reduce((t, r) => ({ cost: t.cost + Number(r.usage?.costUsd ?? 0), searches: t.searches + Number(r.usage?.searches ?? 0) }), { cost: 0, searches: 0 });
 
   if (error) {
     return (
@@ -65,6 +71,10 @@ export default async function AdminAgentsPage() {
           <h1 className="text-2xl font-bold text-[#111827]">Ajanlar</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">
             VPS worker&apos;ı · {enabled ? 'çalışıyor' : <span className="text-red-500 font-semibold">durduruldu</span>} · değişiklik 1 dk içinde etkili olur
+          </p>
+          <p className="text-sm text-[#374151] mt-1">
+            Bugün: <b>${spent.cost.toFixed(4)}</b> OpenRouter · <b>{spent.searches}</b> arama
+            <span className="text-[#9CA3AF]"> (tavan VPS .env&apos;de: DAILY_LLM_BUDGET_USD, DAILY_SEARCH_LIMIT)</span>
           </p>
         </div>
         <MasterSwitch enabled={enabled} />
