@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export async function createClient() {
@@ -24,25 +25,15 @@ export async function createClient() {
   );
 }
 
+/**
+ * Gerçek service-role client. Cookie OKUMAMALI: supabase-js oturum varsa
+ * service key yerine kullanıcının JWT'sini gönderir, o zaman sorgular RLS'e
+ * takılıp sessizce 0 satır günceller (giriş yapmış admin action'ları böyle bozuluyordu).
+ */
 export async function createAdminClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
-    }
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
   );
 }

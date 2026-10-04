@@ -35,6 +35,7 @@ export { isBillingError };
  */
 export async function runResolveSweep(admin: SupabaseClient, opts: { topUp?: boolean; forceEarly?: boolean } = {}): Promise<SweepResult> {
   const cheap = cheapResearchAvailable();
+  if (!cheap && !process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY missing (or set SERPER_API_KEY + LLM_*)');
   const client = cheap ? null : new Anthropic();
   const nowIso = new Date().toISOString();
   const currentYear = new Date().getFullYear();

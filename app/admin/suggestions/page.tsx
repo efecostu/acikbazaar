@@ -1,9 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdminPage } from '@/lib/adminAuth';
 import { SuggestionsAdminClient } from './SuggestionsAdminClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSuggestionsPage() {
+  await requireAdminPage();
   const supabase = await createAdminClient();
   const { data: suggestions } = await supabase
     .from('market_suggestions')

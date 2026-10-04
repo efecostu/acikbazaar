@@ -1,10 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdminPage } from '@/lib/adminAuth';
 import Link from 'next/link';
 import { formatCredits } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminBetsPage() {
+  await requireAdminPage();
   const supabase = await createAdminClient();
   const { data: bets } = await supabase
     .from('bets')

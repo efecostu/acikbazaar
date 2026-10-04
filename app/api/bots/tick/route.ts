@@ -36,7 +36,8 @@ async function placeBotBet(supabase: SupabaseClient, bot: Bot, market: MarketRow
     p_user_id: bot.id, p_market_id: market.id, p_side: side, p_amount: amount,
   });
   if (!error) return (data as { yes_prob: number }).yes_prob;
-  if (!/bot_place_bet|function|schema cache/i.test(error.message)) throw new Error(error.message);
+  // Yalnızca fonksiyon yoksa eski yola düş — "permission denied for function" gibi hatalar yutulmasın
+  if (!/Could not find the function/i.test(error.message)) throw new Error(error.message);
 
   if (bot.balance < amount) {
     await supabase.from('profiles').update({ balance: bot.balance + 100_000 }).eq('id', bot.id);

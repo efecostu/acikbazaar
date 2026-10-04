@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdminPage } from '@/lib/adminAuth';
 import { notFound } from 'next/navigation';
 import { MarketAdminClient } from './MarketAdminClient';
 
@@ -6,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminMarketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  await requireAdminPage();
   const supabase = await createAdminClient();
 
   const [{ data: market }, { data: bets }, { data: options }] = await Promise.all([

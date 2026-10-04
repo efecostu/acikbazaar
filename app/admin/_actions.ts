@@ -308,8 +308,9 @@ export async function syncBots() {
     const found = byName.get(username.toLowerCase());
     if (found) {
       if (!found.is_bot || found.username !== username) {
-        await supabase.from('profiles').update({ is_bot: true, username }).eq('id', found.id);
-        flagged.push(username);
+        const { error: flagErr } = await supabase.from('profiles').update({ is_bot: true, username }).eq('id', found.id);
+        if (flagErr) errors.push(`${username}: ${flagErr.message}`);
+        else flagged.push(username);
       }
       continue;
     }

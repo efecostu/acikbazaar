@@ -1,5 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 /** /admin'e girebilen hesap(lar). Virgülle birden fazla e-posta verilebilir. */
@@ -43,6 +44,14 @@ export async function isAdminUser(): Promise<boolean> {
  */
 export async function requireAdmin(): Promise<void> {
   if (!(await isAdminUser())) throw new Error('Unauthorized');
+}
+
+/**
+ * Admin page.tsx'lerin ilk satırı. Layout'taki yönlendirme yetmez: Next layout ile
+ * page'i paralel render eder, page'in verisi 307 gövdesinde yine de gönderilir.
+ */
+export async function requireAdminPage(): Promise<void> {
+  if (!(await isAdminUser())) redirect('/markets');
 }
 
 export function unauthorized(hint?: string) {

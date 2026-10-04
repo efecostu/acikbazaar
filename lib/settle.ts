@@ -100,10 +100,15 @@ export async function settleMarket(
         .select('id');
       if (!claimed || claimed.length === 0) continue;
 
-      await admin.rpc('credit_and_update_user', {
+      const { error: creditError } = await admin.rpc('credit_and_update_user', {
         p_user_id: bet.user_id,
         p_amount: bet.potential_payout,
       });
+      if (creditError) {
+        // Ödeme yapılamadı — bahsi pending'e geri al ki tekrar çalıştırınca ödensin
+        await admin.from('bets').update({ status: 'pending', settled_at: null }).eq('id', bet.id).eq('status', 'won');
+        throw new Error(`payout_failed: ${creditError.message}`);
+      }
       wins.push({
         userId: bet.user_id,
         marketTitle: market.title_tr,
@@ -151,13 +156,16 @@ export async function unsettleMarket(admin: SupabaseClient, marketId: string): P
   }
 
   const stillOpen = new Date(market.ends_at).getTime() > Date.now();
-  await admin.from('markets').update({
+  const { error: reopenError } = await admin.from('markets').update({
     status: stillOpen ? 'active' : 'closed',
     outcome: null,
     winning_option_id: null,
     resolved_at: null,
-    resolution_note: null,
   }).eq('id', marketId);
+  if (reopenError) throw new Error(reopenError.message);
+
+  // resolution_note kolonu migration-7 ile gelir; ayrı yazılır ki yoksa yeniden açma bozulmasın
+  await admin.from('markets').update({ resolution_note: null }).eq('id', marketId);
 
   return { reverted };
 }
@@ -169,12 +177,17 @@ export async function unsettleMarket(admin: SupabaseClient, marketId: string): P
 export async function adjustBalance(admin: SupabaseClient, userId: string, delta: number, wonDelta = 0): Promise<void> {
   const { error } = await admin.rpc('adjust_balance', { p_user_id: userId, p_delta: delta, p_won_delta: wonDelta });
   if (!error) return;
+  // Yalnızca fonksiyon gerçekten yoksa düş; yetki hatası vb. sessizce yutulmasın
+  if (!/Could not find the function/i.test(error.message)) {
+    throw new Error(`adjust_balance_failed: ${error.message}`);
+  }
   const { data: prof } = await admin.from('profiles').select('balance, total_won').eq('id', userId).single();
-  if (!prof) return;
-  await admin.from('profiles').update({
+  if (!prof) throw new Error('profile_not_found');
+  const { error: updateError } = await admin.from('profiles').update({
     balance: prof.balance + delta,
     total_won: Math.max(0, (prof.total_won ?? 0) + wonDelta),
   }).eq('id', userId);
+  if (updateError) throw new Error(`adjust_balance_failed: ${updateError.message}`);
 }
 
 /** Market silinmeden önce: bekleyen bahislerin yatırılan tutarını iade eder. */

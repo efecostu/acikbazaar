@@ -43,13 +43,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       .replace(/[^a-z0-9_]/g, '').slice(0, 20);
     const username = cleaned.length >= 3 ? cleaned : `user_${user.id.slice(0, 6)}`;
 
-    await admin.from('profiles').upsert({
+    const { error: upsertError } = await admin.from('profiles').upsert({
       id: user.id,
       username,
       balance: 100000,
       total_bets: 0,
       total_won: 0,
     }, { onConflict: 'id', ignoreDuplicates: true });
+    if (upsertError) console.error('[layout] profile fallback failed', user.id, upsertError.message);
 
     profile = { username, balance: 100000, streak_count: 0 };
   }

@@ -28,6 +28,7 @@ const one = <T,>(x: T | T[]): T => (Array.isArray(x) ? x[0] : x);
 export async function sendDailyReport(admin: SupabaseClient, sweep?: SweepResult) {
   const to = recipients();
   if (!to.length) return { sent: false, reason: 'REPORT_EMAILS / ADMIN_EMAIL tanımlı değil' };
+  if (!process.env.RESEND_API_KEY) return { sent: false, reason: 'RESEND_API_KEY tanımlı değil' };
 
   const since = new Date(Date.now() - 24 * 3600_000).toISOString();
   const today = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' });

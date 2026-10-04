@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server';
+import { requireAdminPage } from '@/lib/adminAuth';
 import Link from 'next/link';
 import { formatCredits, formatDate } from '@/lib/utils';
 import { OpsPanel } from './OpsPanel';
@@ -7,6 +8,7 @@ import { TARGET_ACTIVE_MARKETS } from '@/lib/generate';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
+  await requireAdminPage();
   const supabase = await createAdminClient();
 
   const [
