@@ -15,8 +15,18 @@ export async function syncBots(db: SupabaseClient): Promise<{ created: string[];
   const flagged: string[] = [];
   const errors: string[] = [];
 
-  for (const username of Object.keys(PERSONAS)) {
-    const found = byName.get(username.toLowerCase());
+  for (const [username, persona] of Object.entries(PERSONAS)) {
+    let found = byName.get(username.toLowerCase());
+    // Yeniden adlandırma: yeni ad yoksa eski adlardan birini taşı (bahis geçmişi aynı hesapta kalır)
+    if (!found) {
+      const old = (persona.formerly ?? []).map((n) => byName.get(n.toLowerCase())).find(Boolean);
+      if (old) {
+        const { error: re } = await db.from('profiles').update({ username }).eq('id', old.id);
+        if (re) { errors.push(`${username} (rename): ${re.message}`); continue; }
+        flagged.push(`${old.username} → ${username}`);
+        found = { ...old, username };
+      }
+    }
     if (found) {
       if (!found.is_bot || found.username !== username) {
         const { error: e } = await db.from('profiles').update({ is_bot: true, username }).eq('id', found.id);

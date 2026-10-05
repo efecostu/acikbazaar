@@ -29,7 +29,20 @@ export interface BotPersona {
   oddsTalk: number;
   /** İlgi alanları: bu kategorilerdeki marketlerde daha sık görünür */
   likes: MarketCategory[];
+  /** Aktif olduğu saatler (TRT) [başlangıç, bitiş); gece yarısını geçebilir: [12, 3] = 12:00–03:00 */
+  active?: [number, number];
+  /** Tek bahiste bakiyenin en fazla bu oranını yatırır (kasa yönetimi) */
+  betFraction?: number;
+  /** Aynı markete 7 günde en fazla kaç bahis */
+  maxPerMarketWeek?: number;
+  /** -1..1 — kayıp serisinde: >0 tutarı büyütür (kayıp kovalar), <0 temkinlileşir */
+  tilt?: number;
+  /** Yeniden adlandırma: eski kullanıcı adları. Bot eşitleme hesabı yeni ada taşır, geçmiş korunur. */
+  formerly?: string[];
 }
+
+/** Opsiyonel alanların varsayılanları — persona düzenlerken atlanabilir. */
+export const PERSONA_DEFAULTS = { active: [9, 23] as [number, number], betFraction: 0.05, maxPerMarketWeek: 2, tilt: 0 };
 
 export const PERSONAS: Record<string, BotPersona> = {
   KahinKemal: {
@@ -44,6 +57,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.25, stake: [1500, 12000], chattiness: 0.7, oddsTalk: 0.05,
     likes: ['sports', 'politics', 'economy'],
+    active: [8, 24], betFraction: 0.06, maxPerMarketWeek: 2, tilt: 0.3,
   },
   BorsaKurdu: {
     bio: 'Peşin hükümlü, kestirip atan piyasa kurdu',
@@ -57,6 +71,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.2, stake: [3000, 25000], chattiness: 0.75, oddsTalk: 0.2,
     likes: ['economy', 'tech', 'sports'],
+    active: [9, 1], betFraction: 0.1, maxPerMarketWeek: 3, tilt: 0.6,
   },
   AnalizciAyse: {
     bio: 'Veriyle konuşan sakin analist',
@@ -70,6 +85,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.3, stake: [800, 7000], chattiness: 0.6, oddsTalk: 0.1,
     likes: ['economy', 'sports', 'tech', 'world'],
+    active: [8, 22], betFraction: 0.04, maxPerMarketWeek: 1, tilt: -0.6,
   },
   SkeptikSelin: {
     bio: 'Her şeye şüpheyle bakan, kesin konuşmayan',
@@ -83,6 +99,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.6, stake: [1000, 9000], chattiness: 0.65, oddsTalk: 0.05,
     likes: ['politics', 'world', 'entertainment'],
+    active: [10, 24], betFraction: 0.04, maxPerMarketWeek: 2, tilt: -0.3,
   },
   TaraftarTarik: {
     bio: 'Duygusal, tutkulu tribün taraftarı',
@@ -96,6 +113,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.15, stake: [500, 6000], chattiness: 0.85, oddsTalk: 0,
     likes: ['sports', 'entertainment'],
+    active: [12, 2], betFraction: 0.08, maxPerMarketWeek: 3, tilt: 0.5,
   },
   EmekliErol: {
     bio: 'Her şeyi daha önce görmüş emekli amca',
@@ -109,6 +127,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.3, stake: [500, 4000], chattiness: 0.55, oddsTalk: 0,
     likes: ['politics', 'economy', 'weather'],
+    active: [7, 21], betFraction: 0.03, maxPerMarketWeek: 1, tilt: -0.5,
   },
   KriptoKaan: {
     bio: 'Hype peşindeki genç kripto/teknoloji meraklısı',
@@ -122,6 +141,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.25, stake: [2000, 15000], chattiness: 0.7, oddsTalk: 0.1,
     likes: ['tech', 'economy'],
+    active: [11, 3], betFraction: 0.12, maxPerMarketWeek: 3, tilt: 0.7,
   },
   HukukcuHale: {
     bio: 'Market metnini ve kuralı okuyan titiz hukukçu',
@@ -135,6 +155,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.35, stake: [1000, 8000], chattiness: 0.5, oddsTalk: 0,
     likes: ['politics', 'world', 'economy'],
+    active: [9, 23], betFraction: 0.04, maxPerMarketWeek: 1, tilt: -0.4,
   },
   TersKoseTolga: {
     bio: 'Herkesin tersine oynayan provokatör',
@@ -148,6 +169,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.85, stake: [1000, 10000], chattiness: 0.8, oddsTalk: 0.05,
     likes: ['sports', 'politics', 'entertainment', 'world'],
+    active: [11, 2], betFraction: 0.07, maxPerMarketWeek: 2, tilt: 0.4,
   },
   OgrenciOzan: {
     bio: 'Meme dilinde konuşan üniversiteli',
@@ -161,6 +183,7 @@ export const PERSONAS: Record<string, BotPersona> = {
     ],
     contrarian: 0.35, stake: [300, 3000], chattiness: 0.8, oddsTalk: 0,
     likes: ['entertainment', 'sports', 'tech'],
+    active: [12, 3], betFraction: 0.05, maxPerMarketWeek: 2, tilt: 0.2,
   },
 };
 
@@ -171,6 +194,22 @@ export const DEFAULT_PERSONA: BotPersona = {
 
 export function personaOf(username: string): BotPersona {
   return PERSONAS[username] ?? DEFAULT_PERSONA;
+}
+
+/** Opsiyonel alanlar varsayılanlarla doldurulmuş strateji. */
+export function strategyOf(persona: BotPersona) {
+  return {
+    active: persona.active ?? PERSONA_DEFAULTS.active,
+    betFraction: persona.betFraction ?? PERSONA_DEFAULTS.betFraction,
+    maxPerMarketWeek: persona.maxPerMarketWeek ?? PERSONA_DEFAULTS.maxPerMarketWeek,
+    tilt: persona.tilt ?? PERSONA_DEFAULTS.tilt,
+  };
+}
+
+/** Bot bu TRT saatinde aktif mi? [12, 3] gibi gece yarısını geçen aralıkları destekler. */
+export function isActiveAt(persona: BotPersona, hourTrt: number): boolean {
+  const [from, to] = strategyOf(persona).active;
+  return from <= to ? hourTrt >= from && hourTrt < to : hourTrt >= from || hourTrt < to;
 }
 
 /** Botun bu kategoriye ilgisi (bot seçiminde ağırlık). */
