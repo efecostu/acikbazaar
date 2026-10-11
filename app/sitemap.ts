@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/leaderboard`, changeFrequency: 'daily', priority: 0.5 },
     { url: `${base}/activity`, changeFrequency: 'hourly', priority: 0.4 },
     { url: `${base}/register`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/cerez-politikasi`, changeFrequency: 'yearly', priority: 0.1 },
   ];
 
   try {
