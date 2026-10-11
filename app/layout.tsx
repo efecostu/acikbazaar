@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter_Tight, IBM_Plex_Mono } from 'next/font/googl
 import './globals.css';
 import { LangProvider } from '@/contexts/LangContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import Analytics from '@/components/Analytics';
 
 const display = Bricolage_Grotesque({
   subsets: ['latin', 'latin-ext'],
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <LangProvider>
             {children}
+            <Analytics />
           </LangProvider>
         </ThemeProvider>
       </body>

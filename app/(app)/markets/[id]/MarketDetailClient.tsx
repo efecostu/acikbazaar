@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { track } from '@/lib/analytics';
 import { useRouter } from 'next/navigation';
 import { Market, MarketOption, Bet, BetSide } from '@/types';
 import { useLang } from '@/contexts/LangContext';
@@ -123,6 +124,7 @@ export function MarketDetailClient({ market, balance: initialBalance, userId, us
       return;
     }
     setBalance(data?.new_balance ?? balance - amount);
+    track('place_bet', { market_id: market.id, amount, market_type: isMulti ? 'multi' : 'binary' });
     const picked = isMulti
       ? (lang === 'tr' ? activeOption?.label_tr : activeOption?.label_en)
       : selectedSide === 'yes' ? t('EVET', 'YES') : t('HAYIR', 'NO');

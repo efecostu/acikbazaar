@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
+import { track } from '@/lib/analytics';
 import { Input } from '@/components/ui/Input';
 
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -64,6 +65,7 @@ export default function RegisterPage() {
       return;
     }
     // Profil DB trigger'ı ile otomatik oluşur (client insert gerekmez).
+    track('sign_up', { method: 'email', referred: Boolean(ref) });
     if (!data.session) {
       // E-posta doğrulama açıksa session gelmez — kullanıcıyı bilgilendir
       setInfo(`${email} adresine doğrulama linki gönderdik. Linke tıkladıktan sonra giriş yapabilirsin.`);
